@@ -1,0 +1,21 @@
+#!/bin/bash
+
+function findproj {
+	if [ "/" != "$1" ]; then
+		p=$(basename $1/*.xcodeproj);
+		if [ "*.xcodeproj" = "$p" ]; then
+			up=$(dirname $1);
+			if [ "/" != "$up" ]; then
+				findproj "$up";
+			else
+				exit
+			fi
+		else
+			echo $1/$p;
+		fi
+	fi
+}
+
+proj=$(findproj $(pwd))
+#echo proj: $proj
+open -a Xcode $proj $(pwd)/$1

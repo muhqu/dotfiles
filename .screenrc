@@ -1,0 +1,5 @@
+# disable the startup splash message that screen displays on startup
+startup_message off
+
+caption always '%{= bc}%H %{K}%= %{= bB}%?%-Lw%?%{W}%n*%f %t%?(%u)%?%{B}%?%+Lw%?%?%= %{K}%{B} %{c}%c%{K}'
+

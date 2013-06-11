@@ -1,0 +1,208 @@
+#!/bin/bash
+#
+# The MIT License (MIT)
+#
+# Copyright (c) 2010 Mathias Leppich <mleppich@muhqu.de>
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
+
+usage() {
+	echo "Usage: $0 [options] [action] [branch]"
+	echo "Actions: "
+	FORMAT="  %-30s %s\n"
+	printf "$FORMAT" "curr" \
+		"prints the current version"
+	printf "$FORMAT" "incr major|minor|patch" \
+		"prints the version with incremented major, minor or patch"
+	printf "$FORMAT" "bump major|minor|patch" \
+		"increments the version and creats a git tag"
+	printf "$FORMAT" "tag X.X.X" \
+		"creates a git tag with the given version"
+	echo "Options: "
+	printf "$FORMAT" "-v,--verbose" \
+				"increases verbosity"
+	printf "$FORMAT" "-f,--force" \
+				"force a certain action"
+}
+
+read_version() {
+	GIT_VERSION=$(git describe $BRANCH 2>/dev/null || git describe --tags $BRANCH)
+	PREFIX=$(echo "$GIT_VERSION" | sed -e 's/[0-9].*//')
+	SHORT_VERSION=$(echo "$GIT_VERSION" | sed -e 's/^'$PREFIX'//' -e 's/-.*//')
+	MAJOR=$(echo "$SHORT_VERSION" | sed -E 's/([0-9]+).*/\1/')
+	MINOR=$(echo "$SHORT_VERSION" | sed -E 's/[0-9]+\.([0-9]+).*/\1/')
+	PATCH=$(echo "$SHORT_VERSION" | sed -E 's/[0-9]+\.[0-9]+\.([0-9]+).*/\1/')
+	MAJOR=$((MAJOR+0))
+	MINOR=$((MINOR+0))
+	PATCH=$((PATCH+0))
+}
+
+print_version() {
+	echo "$PREFIX$MAJOR.$MINOR.$PATCH"
+}
+
+version_current() {
+	read_version;
+	echo $GIT_VERSION;
+}
+
+version_last() {
+	read_version;
+	print_version;
+}
+
+version_incr_major() {
+	read_version;
+	MAJOR=$((MAJOR+1))
+	MINOR=0
+	PATCH=0
+	print_version;
+}
+
+version_incr_minor() {
+	read_version;
+	MINOR=$((MINOR+1))
+	PATCH=0
+	print_version;
+}
+
+version_incr_patch() {
+	read_version;
+	PATCH=$((PATCH+1))
+	print_version;
+}
+
+version_bump() {
+	TAG="$1"
+	LAST="$2"
+	STATUS=$(git status --porcelain | grep -v -e '^??' >/dev/null && echo DIRTY || echo CLEAN)
+	if [ "$STATUS" == "DIRTY" -a "$FORCE" == "no" ]; then
+		echo "git working copy is dirty, commit or stash changes and try again."
+		echo "aborting.."
+		exit 1;
+	fi
+	MSG=$(echo "version $TAG bumped $(date -u) by $(git config --get user.name)" && echo "" && echo "whats new:" && git log $LAST..HEAD --oneline | awk '{print " * " $0}')
+	echo -e "$MSG" | git tag "$TAG" -a -F - && echo -e "$MSG";
+}
+
+version_tag() {
+	LAST=$(version_last)
+	version_bump "$TAG" "$LAST"
+}
+
+version_bump_major() {
+	LAST=$(version_last)
+	TAG=$(version_incr_major)
+	version_bump "$TAG" "$LAST";
+}
+
+version_bump_minor() {
+	LAST=$(version_last)
+	TAG=$(version_incr_minor)
+	version_bump "$TAG" "$LAST";
+}
+
+version_bump_patch() {
+	LAST=$(version_last)
+	TAG=$(version_incr_patch)
+	version_bump "$TAG" "$LAST";
+}
+
+VERBOSE="no"
+FORCE="no"
+BRANCH="HEAD"
+ACTION="usage"
+TAG=""
+until [ -z "$1" ]; do
+	case $1 in
+		-v|--verbose)
+			shift; VERBOSE="yes"
+			;;
+		-f|--force)
+			shift; FORCE="yes"
+			;;
+		-h|--help|help)
+			shift; ACTION="usage"
+			;;
+		-c|--curr|curr|current)
+			shift; ACTION="version_current"
+			if [ -n "$1" ]; then
+				BRANCH="$1"
+				shift;
+			fi
+			;;
+		-i|--inc|--incr|inc|incr|increment)
+			shift;
+			if [ "$1" == "major" ]; then
+				ACTION="version_incr_major"
+			elif [ "$1" == "minor" ]; then
+				ACTION="version_incr_minor"
+			elif [ "$1" == "patch" ]; then
+				ACTION="version_incr_patch"
+			else
+				echo "unknown option: $1";
+				usage;
+				exit 1
+			fi
+			shift;
+			if [ -n "$1" ]; then
+				BRANCH="$1"
+				shift;
+			fi
+			;;
+		-b|--bump|bump)
+			shift;
+			if [ "$1" == "major" ]; then
+				ACTION="version_bump_major"
+			elif [ "$1" == "minor" ]; then
+				ACTION="version_bump_minor"
+			elif [ "$1" == "patch" ]; then
+				ACTION="version_bump_patch"
+			else
+				echo "unknown option: $1";
+				usage;
+				exit 1
+			fi
+			shift;
+			if [ -n "$1" ]; then
+				BRANCH="$1"
+				shift;
+			fi
+			;;
+		-t|--tag|tag)
+			ACTION="version_tag"
+			shift;
+			if [ -z "$1" ]; then
+				echo "missing tag (e.g. X.X.X)";
+				usage;
+				exit 1
+			fi
+			TAG="$1"
+			shift;
+			;;
+		*)
+			echo "unknown option: $1";
+			usage;
+			exit 1
+			;;
+	esac
+done
+$ACTION;
+exit 0;

@@ -1,0 +1,20 @@
+#!/bin/bash
+
+if [ "$TERM" == 'xterm-color' -o "$TERM" == 'screen' ]; then
+    alias ls='ls -G'
+    alias grep='grep --color=auto'
+    export GREP_COLOR=32 # nice green!
+    PS1="\[\033[01;33m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\$(parse_branch)\[\033[01;36m\]\w\[\033[00m\]\$ "
+
+    function parse_branch() {
+       parse_svn_branch && parse_git_branch
+    }
+
+    function parse_svn_branch() {
+       (head -5 .svn/entries | tail -1 | sed 's!'`head -6 .svn/entries|tail -1`'!!') 2>/dev/null | sed -e 's/\/\(.*\)/SVN(\1)/'
+    }
+
+    function parse_git_branch() {
+       git branch --no-color 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/GIT(\1)/'
+    }
+fi

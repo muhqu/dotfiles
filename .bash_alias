@@ -1,0 +1,13 @@
+#!/bin/bash
+
+alias webshare='python -c "import SimpleHTTPServer;SimpleHTTPServer.test()"'
+alias jsontool='python -mjson.tool'
+alias console='open -a Console'
+
+alias gitxa='gitx --all'
+alias gitxc='gitx --commit'
+
+alias pbedit='pbpaste | subl -n | pbcopy'
+
+alias vbp='version bump patch'
+alias vbm='version bump minor'

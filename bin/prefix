@@ -1,0 +1,11 @@
+#!/bin/bash
+PREFIX="";
+CMD="";
+while [ "$1" != "" -a "$1" != "--" ];
+do
+   CMD="$CMD$1 ";
+   shift;
+done;
+shift;
+PREFIX="$@"
+$CMD | awk "{print \"$PREFIX\"\$0}";
