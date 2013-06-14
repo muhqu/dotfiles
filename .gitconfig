@@ -1,18 +1,18 @@
 [user]
-	name = Mathias Leppich
-	email = mleppich@muhqu.de
-	
+    name = Mathias Leppich
+    email = mleppich@muhqu.de
+    
 [github]
-	user = muhqu
-	token = !security find-generic-password -gs "GitHub Token" 2>&1 >/dev/null | awk 'BEGIN{FS="\""}/^pass/{print $2}'
+    user = muhqu
+    token = !security find-generic-password -gs "GitHub Token" 2>&1 >/dev/null | awk 'BEGIN{FS="\""}/^pass/{print $2}'
 
 [alias]
-	st = status -s
-	ci = commit -v
-	cii = commit -v --interactive
-	co = checkout
-	br = branch
-	ri = rebase -i --autosquash
+    st = status -s
+    ci = commit -v
+    cii = commit -v --interactive
+    co = checkout
+    br = branch
+    ri = rebase -i --autosquash
     ready = rebase -i --autosquash @{u}
     udiff = diff @{u}
     wdiff = diff --word-diff
@@ -26,42 +26,42 @@
     assumed = "!git ls-files -v | grep ^h | cut -c 3-"
     unassumeall = "!git assumed | xargs git update-index --no-assume-unchanged"
 
-	unstash = "!git stash show -p | git apply && git stash drop"
-	perm-reset = "!git diff -p | grep -E '^(diff|old mode|new mode)' | sed -e 's/^old/NEW/;s/^new/old/;s/^NEW/new/' | git apply"
-	fixup = "!sh -c 'git commit -m \"fixup! $(git log -1 --format='\\''%s'\\'' $@)\"' -"
-	squash = "!sh -c 'git commit -m \"squash! $(git log -1 --format='\\''%s'\\'' $@)\"' -"
-	
-	stash-list = "!git stash list | while read line; do   ref=${line%%:*};   prefix=$(test $(git diff $ref | wc -l) == \"0\" && echo \"✔  \" || echo \"   \");   echo \"$prefix$line\"; done"
+    unstash = "!git stash show -p | git apply && git stash drop"
+    perm-reset = "!git diff -p | grep -E '^(diff|old mode|new mode)' | sed -e 's/^old/NEW/;s/^new/old/;s/^NEW/new/' | git apply"
+    fixup = "!sh -c 'git commit -m \"fixup! $(git log -1 --format='\\''%s'\\'' $@)\"' -"
+    squash = "!sh -c 'git commit -m \"squash! $(git log -1 --format='\\''%s'\\'' $@)\"' -"
+    
+    stash-list = "!git stash list | while read line; do   ref=${line%%:*};   prefix=$(test $(git diff $ref | wc -l) == \"0\" && echo \"✔  \" || echo \"   \");   echo \"$prefix$line\"; done"
 
-	subl = "!f(){ FILE=\"$GIT_PREFIX$2\"; if [ -z \"$2\" -a -n \"$DTERM_SELECTED_FILES\" ]; then FILE=\".${DTERM_SELECTED_FILES/$PWD/}\"; fi; git cat-file -p \"$1:$FILE\" | subl -n; };f"
+    subl = "!f(){ FILE=\"$GIT_PREFIX$2\"; if [ -z \"$2\" -a -n \"$DTERM_SELECTED_FILES\" ]; then FILE=\".${DTERM_SELECTED_FILES/$PWD/}\"; fi; git cat-file -p \"$1:$FILE\" | subl -n; };f"
 
-	# via http://stackoverflow.com/a/4991675/450383
+    # via http://stackoverflow.com/a/4991675/450383
     oldest-ancestor = !bash -c 'diff --old-line-format='' --new-line-format='' <(git rev-list --first-parent "${1:-master}") <(git rev-list --first-parent "${2:-HEAD}") | head -1' -
     branchdiff = "!f(){ git diff $(git oldest-ancestor ${1:-master} ${2:-HEAD})..${2:-HEAD}; };f"
-	branchlog = "!f(){ git log $(git oldest-ancestor ${1:-master} ${2:-HEAD})..${2:-HEAD}; };f"
-	branchgraph = "!f(){ git log --oneline --decorate --graph $(git oldest-ancestor ${1:-master} ${2:-HEAD})..${2:-HEAD}; };f"
+    branchlog = "!f(){ git log $(git oldest-ancestor ${1:-master} ${2:-HEAD})..${2:-HEAD}; };f"
+    branchgraph = "!f(){ git log --oneline --decorate --graph $(git oldest-ancestor ${1:-master} ${2:-HEAD})..${2:-HEAD}; };f"
  
 [core]
-	excludesfile = ~/.gitignore-global
+    excludesfile = ~/.gitignore-global
 
 [color]
-	branch = auto
-	diff = auto
-	interactive = auto
-	status = auto
+    branch = auto
+    diff = auto
+    interactive = auto
+    status = auto
 
 [mergetool "subl"] 
-	cmd = subl "$PWD/$MERGED"
-	trustExitCode = false
-	
+    cmd = subl "$PWD/$MERGED"
+    trustExitCode = false
+    
 [mergetool "p4merge"]
-	cmd = p4merge "$BASE" "$LOCAL" "$REMOTE" "$MERGED"
-	keepTemporaries = false
-	trustExitCode = false
-	
+    cmd = p4merge "$BASE" "$LOCAL" "$REMOTE" "$MERGED"
+    keepTemporaries = false
+    trustExitCode = false
+    
 [mergetool]
-	keepBackup = false
-	prompt = false
+    keepBackup = false
+    prompt = false
 
 [merge] 
-	tool = p4merge
+    tool = p4merge
