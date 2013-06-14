@@ -35,6 +35,11 @@
 
 	subl = "!f(){ FILE=\"$GIT_PREFIX$2\"; if [ -z \"$2\" -a -n \"$DTERM_SELECTED_FILES\" ]; then FILE=\".${DTERM_SELECTED_FILES/$PWD/}\"; fi; git cat-file -p \"$1:$FILE\" | subl -n; };f"
 
+	# via http://stackoverflow.com/a/4991675/450383
+    oldest-ancestor = !bash -c 'diff --old-line-format='' --new-line-format='' <(git rev-list --first-parent "${1:-master}") <(git rev-list --first-parent "${2:-HEAD}") | head -1' -
+    branchdiff = "!f(){ git diff $(git oldest-ancestor ${1:-master} ${2:-HEAD})..${2:-HEAD}; };f"
+	branchlog = "!f(){ git log $(git oldest-ancestor ${1:-master} ${2:-HEAD})..${2:-HEAD}; };f"
+	branchgraph = "!f(){ git log --oneline --decorate --graph $(git oldest-ancestor ${1:-master} ${2:-HEAD})..${2:-HEAD}; };f"
  
 [core]
 	excludesfile = ~/.gitignore-global
