@@ -26,8 +26,8 @@
     assumed = "!git ls-files -v | grep ^h | cut -c 3-"
     unassumeall = "!git assumed | xargs git update-index --no-assume-unchanged"
 
+    permission-reset = !git diff -p -R | grep -E \"^(diff|(old|new) mode)\" | git apply
     unstash = "!git stash show -p | git apply && git stash drop"
-    perm-reset = "!git diff -p | grep -E '^(diff|old mode|new mode)' | sed -e 's/^old/NEW/;s/^new/old/;s/^NEW/new/' | git apply"
     fixup = "!sh -c 'git commit -m \"fixup! $(git log -1 --format='\\''%s'\\'' $@)\"' -"
     squash = "!sh -c 'git commit -m \"squash! $(git log -1 --format='\\''%s'\\'' $@)\"' -"
     
