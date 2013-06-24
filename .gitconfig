@@ -4,7 +4,7 @@
     
 [github]
     user = muhqu
-    token = !security find-generic-password -gs "GitHub Token" 2>&1 >/dev/null | awk 'BEGIN{FS="\""}/^pass/{print $2}'
+	token = !security find-generic-password -gs \"GitHub Token\" 2>&1 >/dev/null | awk 'BEGIN{FS=\"\\\"\"}/^pass/{print $2}'
 
 [alias]
     st = status -s
