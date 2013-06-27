@@ -39,7 +39,9 @@
     oldest-ancestor = !bash -c 'diff --old-line-format='' --new-line-format='' <(git rev-list --first-parent "${1:-master}") <(git rev-list --first-parent "${2:-HEAD}") | head -1' -
     branchdiff = "!f(){ git diff $(git oldest-ancestor ${1:-master} ${2:-HEAD})..${2:-HEAD}; };f"
     branchlog = "!f(){ git log $(git oldest-ancestor ${1:-master} ${2:-HEAD})..${2:-HEAD}; };f"
-    branchgraph = "!f(){ git log --oneline --decorate --graph $(git oldest-ancestor ${1:-master} ${2:-HEAD})..${2:-HEAD}; };f"
+    branchgraph = "!f(){ git log --oneline --decorate --graph --boundary --pretty='format:%C(auto)%h%d %ar%n%an: %C(cyan)%s%Creset%n' $(git oldest-ancestor ${1:-master} ${2:-HEAD})..${2:-HEAD}; };f"
+    bl = !git branchlog
+    bg = !git branchgraph
  
 [core]
     excludesfile = ~/.gitignore-global
@@ -49,6 +51,16 @@
     diff = auto
     interactive = auto
     status = auto
+
+[color "branch"]
+    current = cyan bold
+    remote = green
+
+[color "decorate"]
+    HEAD = cyan bold
+    branch = green bold
+    remoteBranch = green
+    tag = yellow bold
 
 [mergetool "subl"] 
     cmd = subl "$PWD/$MERGED"
