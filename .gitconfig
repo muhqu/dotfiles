@@ -46,6 +46,9 @@
 [core]
     excludesfile = ~/.gitignore-global
 
+[push]
+    default = simple
+
 [color]
     branch = auto
     diff = auto
