@@ -12,5 +12,5 @@ export HISTSIZE=10000              # Store 10k history entries
 shopt -s histappend                # Append to the history file when exiting instead of overwriting it
 
 # Make some commands not show up in history
-export HISTIGNORE="ls:ls *:cd:cd -:pwd;exit:date:* --help"
+export HISTIGNORE="ls:cd:cd -:pwd;exit:date:* --help"
 
