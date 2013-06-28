@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ "$TERM" == 'xterm-color' -o "$TERM" == 'screen' ]; then
+if [[ "$TERM" = xterm-*color ]] ||  [[ "$TERM" = screen ]]; then
     alias ls='ls -G'
     alias grep='grep --color=auto'
     export GREP_COLOR=32 # nice green!
