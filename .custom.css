@@ -1,0 +1,12 @@
+
+/* http://trac.edgewall.org/ */ textarea.trac-resizable,
+/* https://forums.aws.amazon.com/ */ #jive-postpage textarea#textEditor
+{
+	font-family: Monaco !important;
+	font-size: 12px !important;
+	background-color: #fff !important;
+	color: #094746 !important;
+	padding: 10px 0 10px 10px !important;
+	box-shadow: inset 0px 0px 30px rgba(0,0,0,0.1) !important;
+	border: 2px dashed rgba(0,128,128,0.2) !important;
+}
