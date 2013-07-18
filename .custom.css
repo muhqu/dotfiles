@@ -10,3 +10,7 @@
 	box-shadow: inset 0px 0px 30px rgba(0,0,0,0.1) !important;
 	border: 2px dashed rgba(0,128,128,0.2) !important;
 }
+
+/* xing.com profile pics... */
+.obfuscated-img img { opacity: 1 !important; }
+.obfuscated-img .photo-info { display: none !important; }
