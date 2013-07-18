@@ -18,7 +18,7 @@
     wdiff = diff --word-diff
 
     hvt = !git highest-version-tag
-    highest-version-tag = "!f(){ git tag | awk 'BEGIN{FS=\".\"}{printf \"%s%02s%04s %s\\n\", $1, $2, $3, $0}' | sort -r | awk '{print $2}' | head -$(( 1 + ${1:-0})) | tail -1;};f"
+    highest-version-tag = "!f(){ git tag | perl -lne '@s=split(/[^0-9]+/, $_); shift @s if ($s[0] eq ""); printf "%04s%04s%04s%04s %s\n",$s[0],$s[1],$s[2],$s[3],$_' | sort -r | awk '{print $2}' | head -$(( 1 + ${1:-0})) | tail -1;};f"
     merge-hvt = "!git merge $(git hvt)"
 
     assume = update-index --assume-unchanged
