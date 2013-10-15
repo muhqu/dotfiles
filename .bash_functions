@@ -44,6 +44,10 @@ function sshscr() {
    ssh $* -t screen -R -D -T xterm-color -e '^Yy'
 }
 
+function reldate() {
+    php -r 'date_default_timezone_set("Europe/Berlin"); print date(DATE_RFC2822,strtotime("'"$*"'")).PHP_EOL;'
+}
+
 
 #
 # Mac OS X specific
