@@ -9,6 +9,7 @@ muhqu's .dotfiles
     * `chrome-reload` and `chrome-shift-reload` to trigger Google Chrome 
     * `last-active-app` to switch to last active app ;)
  * `bin/version` to bump vertion tags in a git repository
+ * `bin/wifi` to turn wifi on/off or show small apple script dialog
  * bunch of special git aliases (or commands):
     * `git ffwd-update` to update all tracking branches, [more info][git-ffwd-update] 
     * `git unstash` to pop changes from stash to a dirty working copy, [more info][git-unstash]
