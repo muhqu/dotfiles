@@ -27,7 +27,7 @@ SELF=$(basename $0)
 
 main() {
   SET_WIFI=""
-  SHOW="dialog"
+  SHOW="status"
   if [ -n "$1" ]; then
     case "$1" in
       [oO][nN]|[oO][fF][fF])
@@ -75,9 +75,13 @@ cat <<USAGE
   Options:
     on        turn airportpower On and print status
     off       turn airportpower Off and print status
-    status    just print airportpower status with exit code 0=on and 1=off
-    dialog    open an apple script dialog to switch WiFi On/Off [default]
+    status    just print airportpower status with exit code 0=on and 1=off [default]
+    dialog    open an apple script dialog to switch WiFi On/Off
     help      this screen
+
+  Example:
+    Use exit code as control structure:
+        $ $SELF >/dev/null && echo ON || echo OFF
 
   Author:
     (c) 2013 Mathias Leppich - github.com/muhqu
