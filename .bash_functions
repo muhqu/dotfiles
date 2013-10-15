@@ -51,15 +51,6 @@ function sshscr() {
 
 if [[ $(uname -s) == "Darwin" ]]; then
 
-function wifi {
-    if [ -n "$1" ]; then
-        networksetup -setairportpower en1 $1
-    fi
-    OUT=$(networksetup -getairportpower en1)
-    echo "$OUT" # to show the output
-    echo "$OUT" | grep -e 'On$' >/dev/null # to either return 0 or 1 exit code
-}
-
 function tab {
     # open a new tab on Terminal with the current working dir
     osascript -e "

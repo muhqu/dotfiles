@@ -1,0 +1,161 @@
+#!/bin/bash
+#
+# The MIT License (MIT)
+#
+# Copyright (c) 2013 Mathias Leppich <mleppich@muhqu.de>
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
+
+SELF=$(basename $0)
+
+main() {
+  SET_WIFI=""
+  SHOW="dialog"
+  if [ -n "$1" ]; then
+    case "$1" in
+      [oO][nN]|[oO][fF][fF])
+        SET_WIFI="$1"
+        SHOW="status"
+        ;;
+      status)
+        SHOW="status"
+        ;;
+      help|-h|--help|-v)
+        SHOW="help"
+        ;;
+      dialog)
+        SHOW="dialog"
+        ;;
+      *)
+        SHOW="usage"
+        ;;
+    esac
+  fi
+
+  if [ -n "$SET_WIFI" ]; then
+    networksetup -setairportpower en1 "$SET_WIFI"
+  fi
+
+  case "$SHOW" in
+    usage)  usage; ;;
+    help)   help; ;;
+    status) wifiStatus; ;;
+    dialog) wifiDialog; ;;
+  esac
+}
+
+usage() {
+cat <<USAGE
+Usage: $SELF [ on | off | status | dialog | help ]
+USAGE
+}
+
+help() {
+cat <<USAGE
+
+  Usage: $SELF [ on | off | status | dialog | help ]
+
+  Options:
+    on        turn airportpower On and print status
+    off       turn airportpower Off and print status
+    status    just print airportpower status with exit code 0=on and 1=off
+    dialog    open an apple script dialog to switch WiFi On/Off [default]
+    help      this screen
+
+  Author:
+    (c) 2013 Mathias Leppich - github.com/muhqu
+
+USAGE
+}
+
+wifiStatus() {
+    OUT=$(networksetup -getairportpower en1)
+    echo "$OUT" # to show the output
+    echo "$OUT" | grep -e 'On$' >/dev/null # to either return 0 or 1 exit code
+}
+
+isWifiOn() {
+    networksetup -getairportpower en1 | grep -e 'On$' >/dev/null
+}
+
+wifi() {
+    if [ -n "$1" ]; then
+        networksetup -setairportpower en1 $1
+    else
+        networksetup -getairportpower en1
+    fi
+}
+
+wifiDialog() {
+  OLD_WIFI_STATE=$(isWifiOn && echo "On" || echo "Off")
+  WIFI_DIALOG_LOCK="/tmp/wifi-dialog-lock"
+  [ $(find "$WIFI_DIALOG_LOCK" -mmin +30 2>/dev/null) ] && rm "$WIFI_DIALOG_LOCK"
+  if [ ! -e "$WIFI_DIALOG_LOCK" ]; then
+    touch /tmp/wifi-dialog-lock;
+    NEW_WIFI_STATE=$(wifiDialogShow $OLD_WIFI_STATE)
+    if [ "false" != "$NEW_WIFI_STATE" -a "$OLD_WIFI_STATE" != "$NEW_WIFI_STATE" ]; then
+      wifi $NEW_WIFI_STATE;
+    fi
+    rm "$WIFI_DIALOG_LOCK"
+  else 
+    wifiDialogReactivate;
+  fi
+}
+
+wifiDialogReactivate() {
+  echo 'tell application "System Events" to activate' | osascript -s ho 2>&1
+}
+
+wifiDialogShow() {
+  DEFAULT="$1"
+  osascript -s ho - "$@" 2>&1 <<-APPLESCRIPT
+set dialogTitle to "WiFi Switch"
+tell application "System Events"
+  activate
+  --Choose from list
+  set chosenListItem to false
+  try
+    with timeout of 5 seconds
+      set chosenListItem to choose from list {"On", "Off"} ¬
+            with title dialogTitle ¬
+            with prompt "Turn WiFi..." ¬
+            default items "$DEFAULT" ¬
+            OK button name "OK!" ¬
+            cancel button name "Nope, cancel" ¬
+            multiple selections allowed false ¬
+            with empty selection allowed
+    end timeout
+  on error errMsg number errNbr
+    if errNbr = -1712 then -- timeout reached
+       tell application process "System Events"
+           tell window dialogTitle
+               click button 2
+           end tell
+       end tell
+   end if
+  end try
+  chosenListItem
+end tell
+
+APPLESCRIPT
+
+}
+
+main "$@";
