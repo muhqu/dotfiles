@@ -8,7 +8,7 @@ CHROME_CUSTOM_CSS_SYMLINK=$(CHROME_USER_STYLES_DIR)/Custom.css
 
 update :
 	@test "$(WORKINGCOPY)" == "CLEAN" || (echo "Failed: working copy not clean! commit or stash changes..."; exit 1)
-	git ls-files | awk '!/^Makefile/' | xargs -t -n1 -I% cp $(HOME)/% %
+	git ls-files | awk '!/^(Makefile|README)/' | xargs -t -n1 -I% cp $(HOME)/% %
 
 checkin : 
 	git add .
