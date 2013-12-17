@@ -1,0 +1,197 @@
+#!/bin/bash
+#
+# The MIT License (MIT)
+#
+# Copyright (c) 2013 Mathias Leppich <mleppich@muhqu.de>
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
+SELF="$(basename $0)"
+
+usage() {
+    (cat | sed 's/SELF/'"$SELF"'/') <<'USAGE'
+Usage: SELF [ -h | -s | -c CMD [-n N] | [VALUE] [..] ] [ -L ]
+USAGE
+}
+
+help() {
+    usage;
+    (cat | sed 's/SELF/'"$SELF"'/') <<'HELP'
+
+Options:
+    -h, --help            this help
+    -s, --stream          read values from stdin and draw the chart incrementaly
+    -c, --command CMD     exec CMD to read values
+    -n, --sleep N         interval to sleep between exec
+    -L, --legend          show legend, e.g. min/max/curr/mean
+    -l, --no-legend       hide legend
+    --colors              use a spectrum of colors
+    --no-colors           don't use any colors
+
+Examples:
+
+    $ SELF 1 5 22 13 44 33 38
+
+
+      ̄ ̄̄̄ ̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄
+ 
+    $ SELF -c "seq 0 40 | awk '{printf \"%6d\\n\", (sin((systime()+\$1)/2)*cos((systime()+\$1)/4)+1)*20;}'"
+ 
+  
+      ̄̄̄ ̄̄̄ ̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄ ̄̄̄ ̄̄̄̄ ̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄ ̄̄̄̄ ̄̄̄ ̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄
+
+    $ ping -n localhost | awk 'BEGIN{FS="time=|ms"}{printf "%d\n",$2*1000;fflush()}' | ./bin/superspark --stream -L
+
+
+
+      ̄̄̄̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄̄̄ ̄̄̄̄̄̄̄̄̄̄̄̄̄
+     min: 0      max: 196    curr: 105    mean: 97.12   
+
+Author:
+    (c) 2013 Mathias Leppich <mleppich@muhqu.de>
+
+HELP
+}
+
+SLEEP="1"
+LINECNT="4"
+LEGEND="no"
+COLORS="no"
+ACTION="series"
+SERIES=""
+
+main() {
+    if [ -t 0 -a -z "$1" ]; then
+        usage;
+        exit 1;
+    fi
+    until [ -z "$1" ]; do
+        case "$1" in
+            -h|--help)
+                help;
+                exit 0;
+                ;;
+            -s|--stream)
+                ACTION="stream";
+                if [ -t 0 ]; then
+                    echo "Error: option $1 requires stream from stdin"
+                    exit 1;
+                fi
+                shift;
+                ;;
+            -c|--command)
+                ACTION="command";
+                if [ -z "$2" ]; then
+                    echo "Error: option $1 requires CMD"
+                    exit 1;
+                fi
+                CMD="$2"
+                shift; shift;
+                ;;
+            -n|--nap|--sleep)
+                if [ -z "$2" ]; then
+                    echo "Error: option $1 requires N; number of seconds to sleep"
+                    exit 1;
+                fi
+                SLEEP="$2";
+                shift;shift;
+                ;;
+            -L|--legend)
+                LEGEND="yes"
+                shift;
+                ;;
+            -l|--no-legend)
+                LEGEND="no"
+                shift;
+                ;;
+            --color|--colors)
+                COLORS="yes"
+                shift;
+                ;;
+            --no-color|--no-colors)
+                COLORS="no"
+                shift;
+                ;;
+            *)
+                SERIES="$SERIES $1";
+                shift;
+                ;;
+        esac
+    done
+
+    if [ "$LEGEND" = "yes" ]; then 
+        LINECNT=$(( $LINECNT + 1 ));
+    fi
+
+    case $ACTION in
+        series )
+            spark $SERIES
+            ;;
+        stream )
+            cat | while read N; do
+                R=$( (echo "$R";echo "$N") | tail -50 );
+                SPARK="$(echo "$R" | spark)";
+                echo -e "$REWIND$SPARK";
+                REWIND="\033[${LINECNT}A"
+            done
+            ;;
+        command )
+            while true; do
+                SPARK="$(echo "$CMD" | $SHELL | spark)";
+                echo -e "$REWIND$SPARK";
+                REWIND="\033[${LINECNT}A"
+                sleep $SLEEP;
+            done
+            ;;
+    esac
+}
+
+spark() {
+    (test -t 0 && echo "$@" || cat) \
+    | xargs -n1 \
+    | php -r '
+        $S=array_map("intval",file("php://stdin"));
+        $M=array_reduce($S, "max", 0);
+        $m=array_reduce($S, "min", $M);
+        $R=array_map(function($I) use ($M) {
+            return $I/max(1,$M);
+        }, $S);
+        $CNT=count($S);
+        $C=end($S);
+        $mean=array_sum($S)/$CNT;
+        $COLORS="'$COLORS'";
+        function colorCode($F) {
+            $C = array(198,199,199,164,164,129,129,93,63,63,33,33,39,38,44,43,49,48,48,83);
+            $M = count($C);
+            return "38;5;".$C[ceil(($F)*($M-1))];
+        }
+        $L="'$LEGEND'"=="yes"?"\033[K ".sprintf("\033[%smmin\033[0m: %-6d \033[%smmax\033[0m: %-6d \033[%smcurr\033[0m: %-6d \033[%smmean\033[0m: %-8.2f",
+            colorCode(0), $m,
+            colorCode(1), $M,
+            colorCode($C/max(1,$M)), $C,
+            colorCode($mean/max(1,$M)), $mean)."\n":"";
+        print preg_replace($COLORS=="yes"?"||":"|\\033\\[[\\d;]+m|","",str_repeat("\033[K\n",3)."\033[K ".implode(array_map(function($F,$V,$I)use($m,$M,$CNT){
+            # $CC=($V===$m)?"31;1":($V===$M?"32;1":(($I+1)==$CNT?"33;1":0));
+            $CC = colorCode($F);
+            return "\033[{$CC}m".json_decode("\" ".str_repeat("\u0304", max(0,ceil($F*18))+1)."\"")."\033[0m";
+        }, $R,$S,array_keys($R)), "")."\n".$L);
+        '
+}
+
+main "$@"

@@ -48,23 +48,6 @@ function reldate() {
     php -r 'date_default_timezone_set("Europe/Berlin"); print date(DATE_RFC2822,strtotime("'"$*"'")).PHP_EOL;'
 }
 
-#
-# e.g. seq 0 40 | awk '{printf "%d\n", (sin($1/4)*cos($1/2)+1)*20;}' | superspark
-#
-function superspark() {
-    (test -t 0 && echo "$@" || cat) \
-    | xargs -n1 \
-    | php -r '
-        $S=array_map("intval",file("php://stdin"));
-        $M=array_reduce($S, "max", 0);
-        $R=array_map(function($I) use ($M) {
-            return $I/$M;
-        }, $S);
-        print str_repeat("\n",3).implode(array_map(function($F){
-            return json_decode("\" ".str_repeat("\u0304", max(1,ceil($F*19)))."\"");
-        }, $R), "")."\n";
-        '
-}
 
 #
 # Mac OS X specific
