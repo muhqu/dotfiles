@@ -13,4 +13,6 @@ shopt -s histappend                # Append to the history file when exiting ins
 
 # Make some commands not show up in history
 export HISTIGNORE="ls:cd:cd -:pwd;exit:date:* --help"
-
+export GOPATH="/Users/mleppich/code/projects/go-playground"
+GOPATH_BIN="$(echo "$GOPATH" | sed -E 's/([^:]+)($|:)/\1\/bin\2/g')"
+export PATH=$GOPATH_BIN:/usr/local/go/bin:$PATH
