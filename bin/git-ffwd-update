@@ -32,7 +32,7 @@ main() {
     REMOTES=$(git remote);
   fi
   REMOTES=$(echo "$REMOTES" | xargs -n1 echo)
-  CLB=$(git branch -l|awk '/^\*/{print $2}');
+  CLB=$(git rev-parse --abbrev-ref HEAD);
   echo "$REMOTES" | while read REMOTE; do
     git remote update $REMOTE
     git remote show $REMOTE -n \
