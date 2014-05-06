@@ -1,0 +1,218 @@
+#!/bin/bash
+
+self="$0"
+
+main() {
+    ctxt="$1"
+    if [ -z "$ctxt" ]; then 
+        ctxt="$(guessContext)"
+    fi
+    switchContext "$ctxt"
+}
+
+guessContext() {
+    if isDeviceAvailable "Apple Cinema HD Display"; then 
+        ctxt="home-desk"
+    elif isDeviceAvailable "HubDevice@24130000"; then
+        ctxt="work"
+    elif [ "BigCow" == "$(currentWiFiAttr SSID)" ]; then
+        ctxt="home-wifi"
+    else
+        ctxt="unknown"
+    fi
+    log "guessed context=$ctxt";
+    echo "$ctxt"
+}
+
+switchContext() {
+    next="$1"
+    last=$(cat /tmp/context.last 2>/dev/null)
+    if [ "$next" == "$last" ]; then 
+        log "context '$next' already activated"
+        if [ "$(find /tmp/context.last -mmin +5)" ]; then
+            log "but it was last activated more than 5 min ago... so reactivate"
+            activateContext "$next"
+        fi
+    else
+        activateContext "$next"
+    fi
+}
+
+activateContext() {
+    ctxt="$1"
+    echo "$ctxt" > /tmp/context.last
+    touch /tmp/context.last
+
+    log "activate context: '$ctxt' BEGIN";
+    
+    logPrefix " >> $ctxt : ";
+    case "$ctxt" in
+
+    work )
+        tunnelblickConnect "tadaa";
+        startIfNotRunning "GeekTool Helper" "Dropbox" "Google Drive" "Sublime Text"
+        activateIfNotRunning "Mail" "Adium"
+        activateMinimizedIfNotRunning "Skype" "Zoiper Communicator" "NetNewsWire" "iTunes"
+        adiumStatus "@Speicherstadt"
+        wifi off
+        ;;
+
+    home-desk|desk )
+        tunnelblickConnect "tadaa";
+        startIfNotRunning "GeekTool Helper" "Dropbox" "Google Drive" "Sublime Text"
+        activateIfNotRunning "Skype" "iTunes" "Mail" "NetNewsWire"
+        stopIfRunning "Zoiper Communicator"
+        activateIfNotRunning "Adium"
+        adiumStatus "@Home"
+        wifi off
+        ;;
+
+    home-wifi|bigcow )
+        tunnelblickDisconnect "tadaa";
+        activateIfNotRunning "Skype" "Zoiper Communicator" "Mail" "NetNewsWire"
+        activateIfNotRunning "Adium"
+        adiumStatus "@Home"
+        wifi on
+        ;;
+
+    hotspot )
+        adiumStatus "Away"
+        tunnelblickConnect "tadaa";
+        stopIfRunning "GeekTool Helper" "Dropbox" "Google Drive" "NetNewsWire" \
+                            "Adium" "Skype" "Zoiper Communicator" "iTunes" "Keychain"
+        wifi off
+        ;;
+
+    out )
+        adiumStatus "Away"
+        tunnelblickDisconnect "tadaa";
+        stopIfRunning "GeekTool Helper" "Dropbox" "Google Drive" "NetNewsWire" \
+                            "Adium" "Skype" "Zoiper Communicator" "Dash" "iOS Simulator" \
+                            "Safari" "Firefox" "Charles" "Keychain" "Contacts" "Calender" \
+                            "Reminders" "Skitch" "Stickies" "Notes" "iTunes"
+        wifi off
+        ;;
+
+    * )
+        log "unknown context"
+        ;;
+
+    esac
+    logPrefix "";
+    log "activate context: '$ctxt' END";
+}
+
+activateIfNotRunning() {
+    while [ -n "$1" ]; do
+        debug "activateIfNotRunning: $1"
+        isAppRunning "$1" || (log "activating $1 now..."; osascript -e 'tell app "'"$1"'" to activate');
+        shift
+    done
+}
+
+activateMinimizedIfNotRunning() {
+    while [ -n "$1" ]; do
+        debug "activateMinimizedIfNotRunning: $1"
+        isAppRunning "$1" && (log "just minimize $1..."; activateMinimized "$1") || (log "activating $1 now..."; activateMinimized "$1");
+        shift
+    done
+}
+
+startIfNotRunning() {
+    while [ -n "$1" ]; do
+        debug "startIfNotRunning: $1"
+        isAppRunning "$1" || (log "starting $1 now..."; open -g -a "$1");
+        shift
+    done
+}
+
+stopIfRunning() {
+    while [ -n "$1" ]; do
+        debug "stopIfRunning: $1"
+        isAppRunning "$1" && (log "stoping $1 now..."; osascript -e 'tell app "System Events" to quit process "'"$1"'"');
+        shift
+    done
+}
+
+isRunning() {
+    appPid=$(echo "$processes" | awk '/'"$1"'[^\/]/{if ($2 != '$myPid') print $2}');
+    test -n "$appPid"
+}
+
+isAppRunning() {
+    osascript -s so - >/dev/null 2>&1 <<-APPLESCRIPT
+tell app "System Events" to return process "$1"
+APPLESCRIPT
+}
+
+activateMinimized() {
+    osascript -s so - >/dev/null 2>&1 <<-APPLESCRIPT
+tell app "$1" to activate
+tell app "System Events" to keystroke "m" using {command down}
+APPLESCRIPT
+}
+
+isWifiOn() {
+    networksetup -getairportpower en1 | grep -e 'On$' >/dev/null
+}
+
+isDeviceAvailable() {
+    ioreg -r -n "$1" | grep -v -E '^$' >/dev/null
+}
+
+currentWiFi() {
+    /System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport -I
+}
+currentWiFiAttr() {
+    currentWiFi | awk 'BEGIN{FS=": "}/ '"$1"':/{print $2}'
+}
+
+tunnelblickConnect() {
+    log "tunnelblick connect $1 now...";
+    osascript -s so - >/dev/null <<-APPLESCRIPT
+tell app "Tunnelblick"
+    if (state of first configuration whose name is "$1") is "EXITING" then
+        connect "$1"
+    end if
+end tell
+APPLESCRIPT
+}
+
+tunnelblickDisconnect() {
+    log "tunnelblick disconnect $1 now...";
+    osascript -s so - >/dev/null <<-APPLESCRIPT
+tell app "Tunnelblick"
+    disconnect "$1"
+end tell
+APPLESCRIPT
+}
+
+adiumStatus() {
+    if isAppRunning "Adium"; then
+        STATUS="$1"
+        log "adium change status: $1";
+        osascript -s so - >/dev/null <<-APPLESCRIPT
+tell app "Adium"
+    set global status to first status whose title is "$STATUS"
+end tell
+APPLESCRIPT
+
+    fi
+}
+
+scriptname=$(basename "$self")
+logPrefix() {
+    logprefix="$@"
+}
+log() {
+    #syslog -s -C -l Notice "$scriptname: $logprefix$@"
+    logger "Notice: $scriptname: $logprefix$@" >/dev/null
+    echo >&2 "$logprefix$@"
+}
+debug() {
+    #syslog -s -C -l Debug "$scriptname: $logprefix$@"
+    logger "Debug: $scriptname: $logprefix$@" >/dev/null
+    echo >&2 "$logprefix$@"
+}
+
+main "$@";
