@@ -1,0 +1,265 @@
+#!/bin/bash
+#
+# The MIT License (MIT)
+#
+# Copyright (c) 2013 Mathias Leppich <mleppich@muhqu.de>
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+#
+
+usage() {
+    cat <<-USAGE
+Usage: $(basename "$0") [options] [APPNAME] .. (--help for more info)
+USAGE
+}
+help() {
+    cat <<-USAGE
+
+  Usage: $(basename "$0") [options] [APPNAME] ...
+
+  Options:
+    -h, --help                     this screen
+    -g, --get APPNAME ..           get window positions
+    -s, --store APPNAME ..         store window positions
+    -r, --restore [APPNAME ..]     restore window positions
+    -f, --forget [APPNAME ..]      discard stored window positions
+
+  Author:
+    (c) 2013 Mathias Leppich - github.com/muhqu
+
+USAGE
+}
+
+main() {
+    
+    ACTION="";
+    until [ -z "$1" ]; do
+      case "$1" in
+        -h|--help)
+            help;
+            exit 0;
+            ;;
+        -g|--get|\
+        -s|--store|\
+        -r|--restore|\
+        -f|--forget)
+            case "$1" in
+            -g|--get) ACTION="get";;
+            -s|--store) ACTION="store";;
+            -r|--restore) ACTION="restore";;
+            -f|--forget) ACTION="forget";;
+            esac
+            shift;
+            APPS=();
+            until [ -z "$1" ]; do
+              if [ "${1:0:1}" = "-" ]; then
+                break;
+              else
+                APPS[${#APPS[@]}]="$1"; shift
+              fi
+            done
+            case "$ACTION" in
+                get|store )
+                    if [[ ${#APPS[@]} -le 0 ]]; then
+                        echo "missing APPNAME for action --${ACTION}";
+                        usage;
+                        exit 1
+                    fi
+                    ;;
+            esac
+            case "$ACTION" in
+                get ) getAppPositions "${APPS[@]}" ;;
+                store ) storeAppPositions "${APPS[@]}";;
+                restore ) restoreAppPositions "${APPS[@]}";;
+                forget ) forgetAppPositions "${APPS[@]}";;
+            esac
+            ;;
+        *)
+            echo "unknown option: $1";
+            usage;
+            exit 1
+            ;;
+      esac
+    done
+
+    if [ -z "$ACTION" ]; then
+        usage;
+        exit 1;
+    fi
+
+}
+
+printArgs() {
+    while [[ -n "$1" ]]; do
+        echo "$1"
+        shift
+    done
+}
+
+filepathAppPositions() {
+    echo "$HOME/.win-pos-$(getScreenDim)"
+}
+
+storeAppPositions() {
+    filepath="$(filepathAppPositions)"
+    test -e "$filepath" || touch "$filepath"
+    oldpos=$(cat "$filepath")
+    newpos=$(getAppPositions "$@")
+    newapps=$(echo "$newpos" | awk 'BEGIN{FS=":"}{str=str""$1"|"}END{print substr(str,0,length(str)-1)}')
+    (echo "$newpos"; echo "$oldpos" | awk '!/^('"$newapps"'):/') > "$filepath"
+}
+
+forgetAppPositions() {
+    filepath="$(filepathAppPositions)"
+    if [[ -z "$@" ]]; then
+        # forget all
+        echo "" > "$filepath"
+    else
+        # forget specific
+        test -e "$filepath" || touch "$filepath"
+        positions=$(cat "$filepath")
+        filter=$(printArgs "$@" | awk '{str=str"\""$0"\"|"}END{print substr(str,0,length(str)-1)}')
+        echo "$positions" | awk '!/^('"$filter"'):/' > "$filepath"
+    fi
+}
+
+restoreAppPositions() {
+    filepath="$(filepathAppPositions)"
+    if [[ -z "$@" ]]; then
+        # restore all
+        cat "$filepath" | setAppPositions
+    else
+        # restore specific
+        positions=$(cat "$filepath")
+        filter=$(printArgs "$@" | awk '{str=str"\""$0"\"|"}END{print substr(str,0,length(str)-1)}')
+        echo "$positions" | awk '/^('"$filter"'):/' | setAppPositions
+    fi
+}
+
+bundleIdOfApp() {
+    osascript -e 'return id of application "'"$1"'"'
+}
+bundleIdOfAppFile() {
+    osascript -e 'tell application "Finder" to return id of application file "'"$1"'" of folder "Applications" of startup disk'
+}
+
+getScreenDim() {
+    osascript -s so - "$@" 2>&1 <<-APPLESCRIPT
+on run argv
+    tell application "Finder"
+        set screen_resolution to bounds of window of desktop
+        set screen_width to item 3 of screen_resolution
+        set screen_height to item 4 of screen_resolution
+    end tell
+    log "" & screen_width & "x" & screen_height
+end run
+APPLESCRIPT
+}
+
+getAppPositions() {
+    osascript -s so - "$@" 2>&1 <<-APPLESCRIPT
+on run affectedProcesses
+    set windowRecord to {}
+    tell application "System Events"
+        repeat with i from 1 to count affectedProcesses
+            set end of windowRecord to {"", 0, {}, {}}
+        end repeat
+        repeat with p from 1 to count affectedProcesses
+            set processName to (item p of affectedProcesses)
+            if exists process processName then
+                set item 1 of item p of windowRecord to processName
+                log "Process '" & processName & "' exists"
+                tell process processName
+                    set numWindows to count windows
+                    set item 2 of item p of windowRecord to numWindows
+                    repeat with i from 1 to numWindows
+                        set end of item 3 of item p of windowRecord to position of window i
+                        set end of item 4 of item p of windowRecord to size of window i
+                    end repeat
+                end tell
+            end if
+        end repeat
+    end tell
+    repeat with p from 1 to count windowRecord
+        set processName to item 1 of item p of windowRecord
+        set numWindows to item 2 of item p of windowRecord
+        set positions to item 3 of item p of windowRecord
+        set sizes to item 4 of item p of windowRecord
+        set logLine to "\"" & processName & "\": " & numWindows
+        repeat with i from 1 to numWindows
+            set logLine to logLine & ";" & item 1 of item i of positions
+            set logLine to logLine & "," & item 2 of item i of positions
+            set logLine to logLine & ";" & item 1 of item i of sizes
+            set logLine to logLine & "x" & item 2 of item i of sizes
+        end repeat
+        log logLine
+    end repeat
+end run
+
+APPLESCRIPT
+
+}
+
+setAppPositions() {
+    script=$(cat <<-APPLESCRIPT
+on run argv
+    set {processName, args} to split(argv as text,":")
+    set args to my split(args,";")
+    set numPositions to item 1 of args
+    tell application "System Events"
+        if exists process processName then
+            tell process processName
+                set numWindows to count windows
+                if numPositions > numWindows then
+                    set numPositions to numWindows
+                end if
+                repeat with i from 1 to numPositions
+                    set argn to (((i-1)*2)+2)
+                    set {x,y} to my split(item argn of args, ",")
+                    set {w,h} to my split(item (argn+1) of args, "x")
+                    -- my blub( "OMG!! " & processName & ": " & i & " : [" & x & "," & y & "]  : [" & w & "," & h & "] ")
+                    set position of window i to {x,y}
+                    set size of window i to {w,h}
+                end repeat
+            end tell
+        end if
+    end tell
+end run
+
+to blub(someText)
+    log someText
+end blub
+
+to split(someText, delimiter)
+    set olddelemiter to AppleScript's text item delimiters
+    set AppleScript's text item delimiters to delimiter
+    set someText to someText's text items
+    set AppleScript's text item delimiters to olddelemiter
+    return someText
+end split
+
+APPLESCRIPT
+)
+    xargs -L1 -P8 osascript -s so -e "$script"
+}
+
+
+
+main "$@";
+
