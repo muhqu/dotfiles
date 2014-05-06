@@ -1,0 +1,49 @@
+#!/bin/bash
+set -e
+
+if [ -t 1 ]; then
+    TPIPE=$(basename $0)
+    case "$1" in
+    -h|--help )
+        cat <<HELP
+Usage: some-command | $TPIPE COMMAND | other-command
+
+Examples:
+       (echo Hello; echo World; echo World) \\
+        | tpipe "wc -l > /tmp/lines.before" \\
+        | tpipe "sort | uniq | wc -l > /tmp/lines.after" \\
+        | cat
+       cat /tmp/lines.{before,after}
+
+HELP
+        exit 0;
+        ;;
+    esac
+    cat >&2 <<USAGE
+Usage: some-command | $TPIPE COMMAND | other-command
+   or: $TPIPE -h | --help
+USAGE
+    exit 1;
+fi
+
+PID=$$
+PIPE="/tmp/tpipe.fifo.$PID"
+CMD="$@"
+CMDPID=
+
+trap _onexit INT TERM EXIT
+_onexit() {
+    [ -n "$CMDPID" ] && kill $CMDPID 2>/dev/null;
+    [ -e $PIPE ] && rm $PIPE;
+}
+
+[ -e $PIPE ] && rm $PIPE;
+mkfifo $PIPE;
+
+bash -c "$CMD" < $PIPE &
+CMDPID=$!
+
+tee $PIPE
+exec 1>&- 2>&-
+wait $CMDPID
+rm $PIPE
