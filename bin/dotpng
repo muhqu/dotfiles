@@ -1,0 +1,102 @@
+#!/bin/bash
+#
+# The MIT License (MIT)
+#
+# Copyright (c) 2014 Mathias Leppich <mleppich@muhqu.de>
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
+SELF="$(basename $0)"
+
+DefaultDotArgs="\
+    -Tpng \
+    -Grankdir=LR \
+    -Nfontname=sans-serif -Nfontsize=13 \
+    -Efontname=sans-serif -Efontsize=12 "
+
+DefaultDotArgsTerminal="\
+    -Gbgcolor=transparent \
+    -Ncolor=white -Nfontcolor=white \
+    -Ecolor=white -Efontcolor=white"
+
+usage(){
+  cat <<USAGE
+Usage: $SELF GRAPHVIZ [dotargs...]
+   or: cat somegraphviz.dot | $SELF [dotargs]
+USAGE
+	  
+}
+
+help(){
+	cat <<HELP
+  Usage: $SELF GRAPHVIZ [dotargs...]
+     or: cat somegraphviz.dot | $SELF [dotargs]
+
+  Defaults:
+	
+    $SELF uses the following default dotargs are used when calling DOT:
+$(echo "$DefaultDotArgs" | xargs -n1 echo "        ")
+
+    When STDOUT is a terminal, these additional dotargs are used:
+$(echo "$DefaultDotArgsTerminal" | xargs -n1 echo "        ")
+
+  Examples:
+
+    Render a white-on-(black|transparent) graph directly on terminal.
+        echo 'digraph { Foo -> Bar }' | $SELF
+
+    Render a black-on-white graph to file.
+        echo 'digraph { Foo -> Bar }' | $SELF > nice.png
+
+    Changing the graphs rankdir:
+        echo 'digraph { Foo -> Bar }' | $SELF -Grankdir=TB
+
+  Author:
+    (c) 2014 Mathias Leppich <mleppich@muhqu.de> :: github.com/muhqu
+
+HELP
+}
+
+if [[ -t 0 ]]; then
+	if [[ $# -eq 0 ]]; then
+		usage;
+		exit 1;
+	fi
+	case "$1" in
+		-h|-help|--help|-?)
+		help;
+		exit 0;
+		;;
+	esac
+fi
+
+graph=""
+if [[ -t 0 && $# -gt 0 ]]; then
+	graph="$1"
+	shift
+fi
+
+dotargs="$DefaultDotArgs"
+if [[ -t 1 ]]; then 
+	dotargs="$dotargs $DefaultDotArgsTerminal"
+fi
+
+([[ -t 0 ]] && echo "$graph" || cat) \
+ | dot $dotargs "$@" \
+ | ([[ -t 1 ]] && imgcat || cat)
