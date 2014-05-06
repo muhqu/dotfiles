@@ -55,6 +55,10 @@ reldate() {
 
 if [[ $(uname -s) == "Darwin" ]]; then
 
+manpdf() {
+    man -t "$@" | open -f -a Preview
+}
+
 tab() {
     # open a new tab on Terminal with the current working dir
     osascript -e "
