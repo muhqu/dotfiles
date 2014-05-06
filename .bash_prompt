@@ -16,15 +16,15 @@ if [[ "$TERM" = xterm-*color ]] ||  [[ "$TERM" = screen ]]; then
     
     PS1="${TITLEBAR}\[\033[1;30m\]╭╶ \[\033[01;33m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\$(parse_branch)\[\033[01;36m\]\w\[\033[0m\]\n\[\033[1;30m\]╰╶➤ \[\033[0m\] "
 
-    function parse_branch() {
+    parse_branch() {
        parse_svn_branch && parse_git_branch
     }
 
-    function parse_svn_branch() {
+    parse_svn_branch() {
        (head -5 .svn/entries | tail -1 | sed 's!'`head -6 .svn/entries|tail -1`'!!') 2>/dev/null | sed -e 's/\/\(.*\)/SVN(\1)/'
     }
 
-    function parse_git_branch() {
+    parse_git_branch() {
        git branch --no-color 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/GIT(\1)/'
     }
 fi

@@ -4,7 +4,7 @@
 # generic functions specific
 # -----------------------------------------------------------------------------
 
-function callonchange() {
+callonchange() {
     WATCH_PATH="$1"
     shift 1
     [ "X" = "X$WATCH_PATH" -o "X" = "X$*" ] \
@@ -17,7 +17,7 @@ function callonchange() {
            done;
 }
 
-function highlight() {
+highlight() {
     WHAT="${1:-error}"
     STYLE="${2:-7}"
     CODE='$S=$argn;';
@@ -31,7 +31,7 @@ function highlight() {
     php -R "$CODE";
 }
 
-function taillog() {
+taillog() {
     LOG="$@"
     if [ -z "$LOG" ]; then 
         LOG="/var/log/system.log"
@@ -39,12 +39,12 @@ function taillog() {
     tail -f "$LOG" | highlight fatal '31;7' err 31 warn 35 notice 36
 }
 
-function sshscr() {
+sshscr() {
    # launch a sreen-session over SSH
    ssh $* -t screen -R -D -T xterm-color -e '^Yy'
 }
 
-function reldate() {
+reldate() {
     php -r 'date_default_timezone_set("Europe/Berlin"); print date(DATE_RFC2822,strtotime("'"$*"'")).PHP_EOL;'
 }
 
@@ -55,7 +55,7 @@ function reldate() {
 
 if [[ $(uname -s) == "Darwin" ]]; then
 
-function tab {
+tab() {
     # open a new tab on Terminal with the current working dir
     osascript -e "
         tell application \"System Events\" to tell process \"Terminal\" to keystroke \"t\" using command down
@@ -63,7 +63,7 @@ function tab {
     " > /dev/null 2>&1
 }
 
-function win {
+win() {
     # open a new Terminal Window with the current working dir
     osascript -e "
         tell application \"System Events\" to tell process \"Terminal\" to keystroke \"n\" using command down
@@ -71,7 +71,7 @@ function win {
     " > /dev/null 2>&1
 }
 
-function chrome-reload {
+chrome-reload() {
     # soft-reloads the active tab of Google Chrome by focusing the location field and hiting return
     osascript -e "
     tell application \"Google Chrome\"
@@ -88,7 +88,7 @@ function chrome-reload {
     " > /dev/null 2>&1
 }
 
-function chrome-shift-reload {
+chrome-shift-reload() {
     # hard-reloads the active tab of Google Chrome by pressing cmd+shift+r
     osascript -e "
     tell application \"Google Chrome\"
@@ -104,22 +104,22 @@ function chrome-shift-reload {
     " > /dev/null 2>&1
 }
 
-function last-active-app {
+last-active-app() {
     # returns to last active application, e.g. use: chrome-reload && last-active-app
     osascript -e "tell application \"System Events\" to keystroke tab using command down" > /dev/null 2>&1
 }
 
-function cmd-c {
+cmd-c() {
     # copy to clipboard
     osascript -e "tell application \"System Events\" to keystroke \"c\" using command down" > /dev/null 2>&1
 }
 
-function cmd-v {
+cmd-v() {
     # paste from clipboard
     osascript -e "tell application \"System Events\" to keystroke \"v\" using command down" > /dev/null 2>&1
 }
 
-function paste-password {
+paste-password() {
     CLPBRD="/tmp/.old-clipboard";
     pbpaste > $CLPBRD;
     security 2>&1 >/dev/null find-generic-password -gs "$@" \
@@ -131,7 +131,7 @@ function paste-password {
     && rm $CLPBRD
 }
 
-function gifify() {
+gifify() {
   if [[ -n "$1" ]]; then
     if [[ $2 == '--good' ]]; then
       ffmpeg -i $1 -r 10 -vcodec png out-static-%05d.png
