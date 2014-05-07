@@ -79,4 +79,8 @@
     prompt = false
 
 [merge] 
-    tool = p4merge
+	tool = bc3
+[diff]
+	tool = bc3
+[difftool]
+	prompt = false
