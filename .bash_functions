@@ -306,16 +306,27 @@ paste-password() {
 }
 
 gifify() {
-  if [[ -n "$1" ]]; then
-    if [[ $2 == '--good' ]]; then
-      ffmpeg -i $1 -r 10 -vcodec png out-static-%05d.png
-      time convert -verbose +dither -layers Optimize -resize 640x640\> out-static*.png  GIF:- | gifsicle --colors 128 --delay=5 --loop --optimize=3 --multifile - > $1.gif
+  case "$1" in
+    -h|-help|--help|'')
+        echo "Usage: gifify <input_movie.mov> [640x480] [--good]"
+        echo "       You DO need to include extension."
+        echo "       Note that --good will propably take a looonnnng time..."
+        return 0;
+        ;;
+  esac
+  FILE="$1"
+  DIM="${2:-640x480}"
+  GOOD="$3"
+  if [[ -n "$FILE" ]]; then
+    DIM="${2:-640x480}"
+    if [[ "$GOOD" == '--good' ]]; then
+      ffmpeg -i $FILE -r 10 -vcodec png out-static-%05d.png
+      time convert -verbose +dither -layers Optimize -resize $DIM\> out-static*.png  GIF:- \
+       | gifsicle --colors 128 --delay=5 --loop --optimize=3 --multifile - > $FILE.gif
       rm out-static*.png
     else
-      ffmpeg -i $1 -s 640x640 -pix_fmt rgb24 -r 10 -f gif - | gifsicle --optimize=3 --delay=3 > $1.gif
+      ffmpeg -i $FILE -s $DIM -pix_fmt rgb24 -r 10 -f gif - | gifsicle --optimize=3 --delay=3 > $FILE.gif
     fi
-  else
-    echo "proper usage: gifify <input_movie.mov>. You DO need to include extension."
   fi
 }
 
