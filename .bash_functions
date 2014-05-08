@@ -213,16 +213,19 @@ csscolor() {
 if [[ $(uname -s) == "Darwin" ]]; then
 
 iterm-bgcolor() {
+    case "$1" in -h|-help|--help) echo "Usage: iterm-bgcolor [colorname|hex]"; return 0;; esac
     echo -e "\033]Ph$(csscolor "$1" || echo -n "${1:-000000}")\033\\"
 }
 
 iterm-succfail() {
     CODE=$?
+    case "$1" in -h|-help|--help) echo "Usage: true;  iterm-succfail"; echo "   or: false; iterm-succfail"; return 0;; esac
     [[ $CODE -eq 0 ]] && iterm-bgcolor 001a00 || iterm-bgcolor 220000
     return $CODE
 }
 
 manpdf() {
+    case "$1" in -h|-help|--help|'') echo "Usage: manpdf [section] name"; return 0;; esac
     man -t "$@" | open -f -a Preview
 }
 
