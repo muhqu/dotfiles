@@ -16,12 +16,21 @@ muhqu's .dotfiles
     * `git perm-reset` to recover file permissions on uncomitted changed files, [more info][git-perm-reset]
     * `git stash-list` to add check marks to stashes indicating whether they are already applied or not [more info][git-stash-list]
  * bash function `superspark` to draw nice bar charts on the terminal
+ * [iTerm][] specific stuff that most likely requires the [nightly build][iTerm-nightly]
+    * `bin/imgcat` to display [images inline][iTerm-images] in the terminal
+    * `bin/dotpng` to render [Graphviz][] directly [inline][iTerm-images] in the terminal
+    * `iterm-bgcolor` to change the background color of current session
+    * `iterm-succfail` to green/red background color wether the last command was successful or not
 
 
 ------
 
 (c) 2013 by [Mathias Leppich][github] 
 
+[iTerm]: http://www.iterm2.com/
+[iTerm-nightly]: http://www.iterm2.com/#/section/downloads
+[iTerm-images]: http://www.iterm2.com/images.html
+[Graphviz]: http://www.graphviz.org/
 [github]: https://github.com/muhqu
 [avatar]: http://www.gravatar.com/avatar/8086489bb41f38d0468310ec3ebe68d7?size=32
 [git-ffwd-update]: http://stackoverflow.com/questions/9076361
