@@ -52,7 +52,7 @@ activateContext() {
         tunnelblickConnect "tadaa";
         startIfNotRunning "GeekTool Helper" "Dropbox" "Google Drive" "Sublime Text"
         activateIfNotRunning "Mail" "Adium"
-        activateMinimizedIfNotRunning "Skype" "Zoiper Communicator" "NetNewsWire" "iTunes"
+        activateIfNotRunning "Skype" "Zoiper Communicator" "NetNewsWire" "iTunes"
         adiumStatus "@Speicherstadt"
         wifi off
         ;;
