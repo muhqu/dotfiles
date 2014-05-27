@@ -129,7 +129,7 @@ startIfNotRunning() {
 stopIfRunning() {
     while [ -n "$1" ]; do
         debug "stopIfRunning: $1"
-        isAppRunning "$1" && (log "stoping $1 now..."; osascript -e 'tell app "System Events" to quit process "'"$1"'"');
+        isAppRunning "$1" && (log "stoping $1 now..."; killall "$1" || osascript -e 'tell app "'"$1"'" to quit');
         shift
     done
 }
