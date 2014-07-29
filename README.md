@@ -25,7 +25,7 @@ muhqu's .dotfiles
 
 ------
 
-(c) 2013 by [Mathias Leppich][github] 
+© 2014 by [Mathias Leppich][github] 
 
 [iTerm]: http://www.iterm2.com/
 [iTerm-nightly]: http://www.iterm2.com/#/section/downloads
