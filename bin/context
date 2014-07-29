@@ -1,13 +1,86 @@
 #!/bin/bash
 
-self="$0"
+SELF="$(basename $0)"
+
+usage() {
+    sed 's/SELF/'"$SELF"'/' <<'USAGE'
+Usage: SELF [ -h | -l | -g | -c | [-s] NAME ]
+USAGE
+}
+
+help() {
+    sed 's/SELF/'"$SELF"'/' <<'HELP'
+Usage: SELF [OPTIONS]
+
+Options:
+    -h, --help
+    -l, --list
+    -g, --guess
+    -c, --current
+    -s, --set NAME
+
+HELP
+}
+
+VERBOSE=1
 
 main() {
-    ctxt="$1"
-    if [ -z "$ctxt" ]; then 
-        ctxt="$(guessContext)"
-    fi
-    switchContext "$ctxt"
+    ACTION="set";
+    SET_CONTEXT="";
+    until [ -z "$1" ]; do
+        case "$1" in
+            -h|-help|--help|help)
+                help;
+                exit 0;
+                ;;
+            -l|-list|--list|list)
+                ACTION="list";
+                shift;
+                ;;
+            -g|-guess|--guess|guess)
+                ACTION="guess";
+                VERBOSE=0;
+                SET_CONTEXT="";
+                shift;
+                ;;
+            -c|-current|--current|current)
+                ACTION="current";
+                VERBOSE=0;
+                shift;
+                ;;
+            -s|-set|--set|set)
+                ACTION="set";
+                shift;
+                ;;
+            -*)
+                echo >&2 "Error: invalid option $1"
+                usage;
+                exit 1;
+                ;;
+            *)
+                SET_CONTEXT="$1";
+                shift;
+                ;;
+        esac
+    done
+
+    case "$ACTION" in
+        guess)
+            echo $(guessContext)
+            ;;
+        current)
+            echo $(cat /tmp/context.last 2>/dev/null)
+            ;;
+        list)
+            availableContexts | xargs -n1
+            ;;
+        set)
+            if [ -z "$SET_CONTEXT" ]; then 
+                SET_CONTEXT="$(guessContext)"
+            fi
+            switchContext "$SET_CONTEXT"
+            ;;
+    esac
 }
 
 guessContext() {
@@ -36,6 +109,10 @@ switchContext() {
     else
         activateContext "$next"
     fi
+}
+
+availableContexts() {
+    echo work home-desk home-wifi hotspot out
 }
 
 activateContext() {
@@ -200,19 +277,18 @@ APPLESCRIPT
     fi
 }
 
-scriptname=$(basename "$self")
 logPrefix() {
     logprefix="$@"
 }
 log() {
-    #syslog -s -C -l Notice "$scriptname: $logprefix$@"
-    logger "Notice: $scriptname: $logprefix$@" >/dev/null
-    echo >&2 "$logprefix$@"
+    #syslog -s -C -l Notice "$SELF: $logprefix$@"
+    [[ $VERBOSE -ge 1 ]] && logger "Notice: $SELF: $logprefix$@" >/dev/null
+    [[ $VERBOSE -ge 1 ]] && echo >&2 "$logprefix$@"
 }
 debug() {
-    #syslog -s -C -l Debug "$scriptname: $logprefix$@"
-    logger "Debug: $scriptname: $logprefix$@" >/dev/null
-    echo >&2 "$logprefix$@"
+    #syslog -s -C -l Debug "$SELF: $logprefix$@"
+    [[ $VERBOSE -ge 2 ]] && logger "Debug: $SELF: $logprefix$@" >/dev/null
+    [[ $VERBOSE -ge 2 ]] && echo >&2 "$logprefix$@"
 }
 
 main "$@";
