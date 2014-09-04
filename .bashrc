@@ -1,4 +1,4 @@
 
-if [ -f /opt/local/etc/bash_completion ]; then
-	. /opt/local/etc/bash_completion
+if [[ -t 0 && -t 1 && -t 2 ]]; then
+	. ~/.bash_profile
 fi

@@ -15,3 +15,7 @@ fi
 if [ -f /usr/local/go/misc/bash/go ]; then
 	. /usr/local/go/misc/bash/go
 fi
+
+if [ -f ~/.iterm2_shell_integration.bash ]; then
+	. ~/.iterm2_shell_integration.bash
+fi
