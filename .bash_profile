@@ -17,5 +17,5 @@ if [ -f /usr/local/go/misc/bash/go ]; then
 fi
 
 if [ -f ~/.iterm2_shell_integration.bash ]; then
-	. ~/.iterm2_shell_integration.bash
+	env | grep ITERM >/dev/null && . ~/.iterm2_shell_integration.bash
 fi
