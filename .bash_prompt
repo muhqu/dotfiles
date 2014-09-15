@@ -14,7 +14,11 @@ if [[ "$TERM" = xterm-*color ]] ||  [[ "$TERM" = screen ]]; then
         ;;
     esac
     
-    PS1="${TITLEBAR}\[\033[1;30m\]╭╶ \[\033[01;33m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\$(parse_branch)\[\033[01;36m\]\w\[\033[0m\]\n\[\033[1;30m\]╰╶➤ \[\033[0m\] "
+    PS1="${TITLEBAR}\[\033[1;30m\]╭╶ \[\033[01;33m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\$(parse_branch)\[\033[01;31m\]\$(parse_aws_profile)\[\033[01;36m\]\w\[\033[0m\]\n\[\033[1;30m\]╰╶➤ \[\033[0m\] "
+
+    parse_aws_profile() {
+      [ -n "$AWS_DEFAULT_PROFILE" ] && echo "AWS($AWS_DEFAULT_PROFILE)"
+    }
 
     parse_branch() {
        parse_svn_branch && parse_git_branch

@@ -23,3 +23,12 @@ fi
 if [ -f ~/.bash_.bash ]; then
 	env | grep ITERM >/dev/null && . ~/.iterm2_shell_integration.bash
 fi
+
+if [ -n "$(which aws_completer)" ]; then
+	complete -C aws_completer aws
+
+	aws-profile() {
+		export AWS_DEFAULT_PROFILE="$1"
+	}
+
+fi
