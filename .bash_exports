@@ -6,6 +6,7 @@ fi
 
 export MANPATH=/usr/local/share/man:$MANPATH
 export JAVA_HOME="$(/usr/libexec/java_home -v 1.7)"
+export LC_ALL=en_US.UTF-8
 export LANG=en_US.UTF-8
 
 export EDITOR="$HOME/bin/subl -n -w" # Sublime Text FTW!
