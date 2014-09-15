@@ -12,6 +12,10 @@ if [ -f /usr/local/etc/bash_completion ]; then
     . /usr/local/etc/bash_completion
 fi
 
+if [ -f ~/.bash_complete_mvn ]; then
+    . ~/.bash_complete_mvn
+fi
+
 if [ -f /usr/local/go/misc/bash/go ]; then
 	. /usr/local/go/misc/bash/go
 fi
