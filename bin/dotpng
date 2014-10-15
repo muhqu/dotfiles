@@ -38,6 +38,7 @@ DefaultDotArgsTerminal="\
 usage(){
   cat <<USAGE
 Usage: $SELF GRAPHVIZ [dotargs...]
+   or: $SELF somegraphviz.dot [dotargs...]
    or: cat somegraphviz.dot | $SELF [dotargs]
 USAGE
 	  
@@ -46,6 +47,7 @@ USAGE
 help(){
 	cat <<HELP
   Usage: $SELF GRAPHVIZ [dotargs...]
+     or: $SELF somegraphviz.dot [dotargs...]
      or: cat somegraphviz.dot | $SELF [dotargs]
 
   Defaults:
@@ -97,6 +99,6 @@ if [[ -t 1 ]]; then
 	dotargs="$dotargs $DefaultDotArgsTerminal"
 fi
 
-([[ -t 0 ]] && echo "$graph" || cat) \
+([[ -t 0 ]] && ([[ -r "$graph" ]] && cat "$graph" || echo "$graph") || cat) \
  | dot $dotargs "$@" \
  | ([[ -t 1 ]] && imgcat || cat)
