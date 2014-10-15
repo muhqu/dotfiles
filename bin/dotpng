@@ -28,11 +28,13 @@ DefaultDotArgs="\
     -Tpng \
     -Grankdir=LR \
     -Nfontname=sans-serif -Nfontsize=13 \
-    -Efontname=sans-serif -Efontsize=12 "
+    -Efontname=sans-serif -Efontsize=12 \
+    -Gfontname=sans-serif -Gfontsize=13 "
 
 DefaultDotArgsTerminal="\
     -Gbgcolor=transparent \
     -Ncolor=white -Nfontcolor=white \
+    -Gcolor=gray  -Gfontcolor=gray \
     -Ecolor=white -Efontcolor=white"
 
 usage(){
