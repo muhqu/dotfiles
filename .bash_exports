@@ -19,7 +19,5 @@ shopt -s histappend                # Append to the history file when exiting ins
 export HISTIGNORE="ls:cd:cd -:pwd;exit:date:* --help"
 
 if [[ ! -n "$GOPATH" ]]; then
-	export GOPATH="$HOME/code/projects/go-playground"
-	GOPATH_BIN="$(echo "$GOPATH" | sed -E 's/([^:]+)($|:)/\1\/bin\2/g')"
-	export PATH=$GOPATH_BIN:/usr/local/go/bin:$PATH
+	export GOPATH="$HOME"
 fi
