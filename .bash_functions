@@ -293,16 +293,24 @@ cmd-v() {
     osascript -e "tell application \"System Events\" to keystroke \"v\" using command down" > /dev/null 2>&1
 }
 
-paste-password() {
-    CLPBRD="/tmp/.old-clipboard";
-    pbpaste > $CLPBRD;
+esc-and-type-text() {
+    TEXT="$(cat)"
+    osascript -s ho 2>&1 <<-APPLESCRIPT
+tell app "System Events"
+    key code 53
+    delay 0.3
+    keystroke "${TEXT}"
+end tell
+APPLESCRIPT
+}
+
+get-password() {
     security 2>&1 >/dev/null find-generic-password -gs "$@" \
-     | awk '/password/{printf "%s", substr($0,12,length($0)-12)}' \
-     | pbcopy \
-    && sleep 1s \
-    && cmd-v \
-    && cat $CLPBRD | pbcopy \
-    && rm $CLPBRD
+     | awk '/password/{printf "%s", substr($0,12,length($0)-12)}'
+}
+
+paste-password() {
+    get-password "$@" | esc-and-type-text
 }
 
 gifify() {
