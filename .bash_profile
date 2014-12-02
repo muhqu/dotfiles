@@ -19,10 +19,6 @@ if [ -f ~/.iterm2_shell_integration.bash ]; then
 	env | grep ITERM >/dev/null && . ~/.iterm2_shell_integration.bash
 fi
 
-if [ -f ~/.bash_.bash ]; then
-	env | grep ITERM >/dev/null && . ~/.iterm2_shell_integration.bash
-fi
-
 if [ -n "$(which aws_completer)" ]; then
 	complete -C aws_completer aws
 
