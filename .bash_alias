@@ -11,3 +11,5 @@ alias pbedit='pbpaste | subl -n | pbcopy'
 
 alias vbp='version bump patch'
 alias vbm='version bump minor'
+
+alias ejectall="osascript -e 'tell app \"Finder\" to eject (every disk whose ejectable is true)'"
