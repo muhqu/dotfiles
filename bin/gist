@@ -1,0 +1,320 @@
+#!/bin/bash
+#
+# The MIT License (MIT)
+#
+# Copyright (c) 2014 Mathias Leppich <mleppich@muhqu.de>
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
+SELF="$(basename $0)"
+
+set -e
+set -o pipefail
+
+usage() {
+cat <<USAGE
+Usage: $SELF [OPTIONS] filename [filename ..]
+   or: $SELF --help
+USAGE
+}
+
+help() {
+cat <<USAGE
+Usage: $SELF [OPTIONS] filename [filename ..]
+   or: $SELF ACTION [ARGS]
+
+General Options:
+    -h                          Help
+    -p,--public                 Post as public gist, defaults to secret
+    -s,--secret                 Post as secret gist
+    --profile NAME              Use profile NAME
+
+Actions:
+    --set-default-profile NAME  Configures NAME to be used as default profile, defaults to "github"
+    --set-token TOKEN           Configures the API Token for the current profile
+    --set-api-url URL           Configures the API URL for the current profile
+    --set-public                Configures --public to be the default for the current profile
+    --set-secret                Configures --secret to be the default for the current profile
+
+Dependencies:
+    jq                          Command Line JSON processor
+                                http://stedolan.github.io/jq/
+
+Author:
+    (c) 2014 Mathias Leppich <mleppich@muhqu.de>
+
+USAGE
+}
+
+_GIST_PROFILE=""
+_SET_TOKEN=""
+_SET_API_URL=""
+_SET_DEFAULT=""
+_SET_PUBLIC=""
+_FILES=""
+_PUBLIC=""
+_GITHUB_API_URL=""
+_GITHUB_API_TOKEN=""
+_TMPDIR="/tmp/$(basename $0).$$"
+
+cleanup() {
+    [ -e "$_TMPDIR" ] && rm -rf "$_TMPDIR" 2>/dev/null || true
+}
+main() {
+    trap cleanup EXIT
+
+    if [ -t 0 -a -z "$1" ]; then
+        usage;
+        exit 1;
+    fi
+    until [ -z "$1" ]; do
+        case "$1" in
+            -h|--help)
+                help;
+                exit 0;
+                ;;
+            -p|-public|--public)
+                _PUBLIC="true"
+                shift;
+                ;;
+            -s|-secret|--secret)
+                _PUBLIC="false"
+                shift;
+                ;;
+            --profile)
+                [ -z "$2" ] && fatal "option $1 requires NAME";
+                _GIST_PROFILE="$2";
+                shift;shift;
+                ;;
+            --set-token)
+                [ -z "$2" ] && fatal "option $1 requires TOKEN";
+                _SET_TOKEN="$2"
+                shift;shift;
+                ;;
+            --set-api-url)
+                [ -z "$2" ] && fatal "option $1 requires URL";
+                _SET_API_URL="$2"
+                shift;shift;
+                ;;
+            --set-default-profile)
+                [ -z "$2" ] && fatal "option $1 requires NAME";
+                _SET_DEFAULT="$2"
+                shift;shift;
+                ;;
+            --set-public)
+                _SET_PUBLIC="true"
+                shift;
+                ;;
+            --set-secret)
+                _SET_PUBLIC="false"
+                shift;
+                ;;
+            --show-profile|--show-profiles)
+                _SHOW_PROFILES="true";
+                shift;
+                ;;
+            -*)
+                fatal "invalid option: $1";
+                ;;
+            *)
+                _FILES="$_FILES $1";
+                shift;
+                ;;
+        esac
+    done
+
+    if [ ! -t 0 ]; then
+        mkdir -p $_TMPDIR
+        cat > $_TMPDIR/input
+        MIME_TYPE="$(file $_TMPDIR/input -b --mime-type || true)"
+        EXT="$(ls -1 /etc/mime.types /etc/apache2/mime.types 2>/dev/null \
+                 | head -1 \
+                 | xargs cat \
+                 | grep "$MIME_TYPE" \
+                 | head -1 \
+                 | awk '{print $2}'\
+                 || true)"
+        if [[ -n "$EXT" && "$EXT" != "txt" ]]; then
+            mv "$_TMPDIR/input" "$_TMPDIR/some.$EXT"
+            _FILES="$_TMPDIR/some.$EXT"
+        else
+            mv "$_TMPDIR/input" "$_TMPDIR/somefile"
+            _FILES="$_TMPDIR/somefile"
+        fi
+    fi
+
+    _ANY_ACTION="${_SET_DEFAULT}${_SET_TOKEN}${_SET_API_URL}${_SHOW_PROFILES}${_SET_PUBLIC}"
+    if [[ -n "$_ANY_ACTION" && -n "$_FILES" ]]; then
+        fatal "invalid action ARGS"
+    fi
+
+    if [[ -n "$_SET_DEFAULT" ]]; then
+        set-gist-service "$_SET_DEFAULT"
+    fi
+
+    if [[ -z "$_GIST_PROFILE" ]]; then
+        _GIST_PROFILE="$(get-gist-service)"
+    fi
+
+    if [[ -n "$_SET_TOKEN" ]]; then
+        set-gist-service-token "$_GIST_PROFILE" "$_SET_TOKEN"
+    fi
+    if [[ -n "$_SET_API_URL" ]]; then
+        set-gist-service-api "$_GIST_PROFILE" "$_SET_API_URL"
+    fi
+    if [[ -n "$_SET_PUBLIC" ]]; then
+        set-gist-service-public "$_GIST_PROFILE" "$_SET_PUBLIC"
+    fi
+
+    _GITHUB_API_URL="$(get-gist-service-api "$_GIST_PROFILE")"
+    _GITHUB_API_TOKEN="$(get-gist-service-token "$_GIST_PROFILE")"
+
+    if [[ -z "$_PUBLIC" ]]; then
+        _PUBLIC="$(get-gist-service-public "$_GIST_PROFILE")"
+    fi
+
+    if [[ -n "$_SHOW_PROFILES" ]]; then
+        echo "Gist Service : $_GIST_PROFILE"
+        echo "API URL      : $_GITHUB_API_URL"
+        echo "API Token    : ${_GITHUB_API_TOKEN:-[missing]}"
+        echo "Default Post : $([[ "$_PUBLIC" = "false" ]] && echo secret || echo public)"
+        exit 1
+    fi
+
+    if [[ -n "$_ANY_ACTION" && -z "$_FILES" ]]; then
+        exit 0
+    fi
+
+    if [[ -z "$_GITHUB_API_TOKEN" ]]; then
+        fatal "missing API Token. Hint: use '$SELF --set-token TOKEN' to configure one."
+    fi
+
+    if [[ -z "$_FILES" ]]; then
+        fatal "missing input"
+    fi
+
+    _WITH_BINARY="false"
+    for FILE in $_FILES; do
+        test -e "$FILE" || fatal "file missing: $FILE"
+        test -s "$FILE" || fatal "zero-length file: $FILE"
+        if [[ "$(file --brief --mime-encoding "$FILE")" = "binary" ]]; then
+            _WITH_BINARY="true"
+        fi
+    done
+
+    RESULT_FILE="$_TMPDIR/.gist_result"
+    (
+        if [[ "$_WITH_BINARY" = "false" ]]; then
+            for FILE in $_FILES; do
+                cat "$FILE" | jq --arg FILE_NAME "$(basename "$FILE")" -R -s '{($FILE_NAME): {content: .}}'
+            done
+        else
+            echo '{"file1.txt":{"content":"some sample content"}}'
+        fi
+    )| jq -s 'add | {public:'$_PUBLIC', files: .}' \
+     | curl -s -d @- -X POST \
+        -u "$_GITHUB_API_TOKEN:x-oauth-basic" \
+        -H 'Content-Type: application/json' \
+        -o "$RESULT_FILE" \
+        "${_GITHUB_API_URL}gists"
+
+    cat "$RESULT_FILE" | jq -r '.id' >/dev/null \
+    || (error "unexpected result"; cat "$RESULT_FILE"; fatal "abort.")
+
+    GIST_ID=$(cat "$RESULT_FILE" | jq -r '.id')
+    GIST_REPO_URL=$(cat "$RESULT_FILE" | jq -r '.git_push_url' | sed -E 's!(https?://)!\1'"$_GITHUB_API_TOKEN:x-oauth-basic@"'!')
+    GIST_HTML_URL=$(cat "$RESULT_FILE" | jq -r '.html_url')
+
+    if [[ "$_WITH_BINARY" = "true" ]]; then
+        git clone "$GIST_REPO_URL" "$_TMPDIR/$GIST_ID"
+        export GIT_WORK_TREE="$_TMPDIR/$GIST_ID"
+        export GIT_DIR="$GIT_WORK_TREE/.git"
+        git rm file1.txt
+
+        for FILE in $_FILES; do
+            cp "$FILE" "$GIT_WORK_TREE/$(basename "$FILE")"
+            git add "$(basename "$FILE")"
+        done
+
+        git commit -a --amend -m "cmdline gist"
+        git push -f
+    fi
+
+    echo "$GIST_HTML_URL" | pbcopy
+    echo
+    echo "Gist URL: $GIST_HTML_URL"
+    echo
+}
+gist-config() {
+    git config -f ~/.gistconfig "$@"
+}
+set-gist-service() {
+    gist-config --replace-all "gist.service" "$1"
+}
+get-gist-service() {
+    gist-config --get "gist.service" || echo "github"
+}
+set-gist-service-api() {
+    gist-config --replace-all "gist.$1.api" "$2"
+}
+get-gist-service-api() {
+    gist-config --get "gist.$1.api" | ensure-trailing-slash || echo "https://api.github.com/"
+}
+set-gist-service-token() {
+    gist-config --replace-all "gist.$1.token" "$2"
+}
+get-gist-service-token() {
+    gist-config --get "gist.$1.token" || true
+}
+set-gist-service-public() {
+    gist-config --replace-all "gist.$1.public" "$2"
+}
+get-gist-service-public() {
+    gist-config --get "gist.$1.public" || echo "false"
+}
+ensure-trailing-slash() {
+    sed -E 's!([^/])/*$!\1/!'
+}
+
+hint() {
+    echo >&2 "Hint: " "$@"
+}
+error() {
+    echo >&2 "Error:" "$@"
+    ERRORS=$(( $ERRORS + 1 ))
+}
+fatal() {
+    error "$@"
+    exit 1
+}
+gotErrors() {
+    [[ $ERRORS -gt 0 ]]
+}
+
+check_prerequisites() {
+    if [[ -z "$(which jq 2>/dev/null)" ]]; then
+        error "missing required dependency: jq         http://stedolan.github.io/jq/"
+        hint  "you might want to install it with: brew install jq"
+    fi
+    if gotErrors; then
+        exit 1
+    fi
+}
+
+check_prerequisites && (main "$@")
