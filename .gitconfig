@@ -33,6 +33,8 @@
     
     stash-list = "!git stash list | while read line; do   ref=${line%%:*};   prefix=$(test $(git diff $ref | wc -l) == \"0\" && echo \"✔  \" || echo \"   \");   echo \"$prefix$line\"; done"
 
+    ffwd = ffwd-update
+
     subl = "!f(){ FILE=\"$GIT_PREFIX$2\"; if [ -z \"$2\" -a -n \"$DTERM_SELECTED_FILES\" ]; then FILE=\".${DTERM_SELECTED_FILES/$PWD/}\"; fi; git cat-file -p \"$1:$FILE\" | subl -n; };f"
 
     # via http://stackoverflow.com/a/4991675/450383
