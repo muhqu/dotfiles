@@ -14,6 +14,8 @@ checkin :
 	git commit -v
 
 install :
-	git ls-files | awk '/^(\.|bin\/)/' | xargs -t -n1 -I% sh -c "rm $(HOME)/% 2>/dev/null; ln -s $(CURDIR)/% $(HOME)/%"
+	mkdir -p $(HOME)/bin $(HOME)/Library/LaunchAgents
+	git ls-files | awk '/^(\.|bin\/|Library\/LaunchAgents\/)/' | xargs -t -n1 -I% sh -c "rm $(HOME)/% 2>/dev/null; ln -s $(CURDIR)/% $(HOME)/%"
+	git ls-files | awk '/^(Library\/LaunchAgents\/)/' | xargs -t -n1 -I% sh -c "launchctl unload ~/%; launchctl load ~/%"
 	test -d $(CHROME_USER_STYLES_DIR) || mkdir -p $(CHROME_USER_STYLES_DIR)
 	test -L $(CHROME_CUSTOM_CSS_SYMLINK) || ln -s $(HOME)/.custom.css $(CHROME_CUSTOM_CSS_SYMLINK)
