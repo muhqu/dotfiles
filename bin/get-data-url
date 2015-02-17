@@ -1,0 +1,19 @@
+#!/bin/bash
+
+SELF="$(basename $0)"
+
+set -e
+set -o pipefail
+
+main() {
+	FILE="$1"
+	MIME="$2"
+
+	if [[ -z "$MIME" ]]; then
+		MIME="$(file "${FILE}" -b --mime-type 2>/dev/null || true)"
+	fi
+	
+	cat "${FILE}" | openssl base64 -e | (echo -n "data:${MIME};base64,"; tr -d '\n')
+}
+
+main "$@"
