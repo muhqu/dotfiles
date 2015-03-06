@@ -15,6 +15,7 @@ muhqu's .dotfiles
     * `git unstash` to pop changes from stash to a dirty working copy, [more info][git-unstash]
     * `git perm-reset` to recover file permissions on uncomitted changed files, [more info][git-perm-reset]
     * `git stash-list` to add check marks to stashes indicating whether they are already applied or not [more info][git-stash-list]
+    * `git fetch-pr NUMBER [REMOTE]` to fetch a github pull-request
  * bash function `superspark` to draw nice bar charts on the terminal
  * [iTerm][] specific stuff that most likely requires the [nightly build][iTerm-nightly]
     * `bin/imgcat` to display [images inline][iTerm-images] in the terminal
