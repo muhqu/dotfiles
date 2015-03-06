@@ -45,6 +45,8 @@
     bl = !git branchlog
     bg = !git branchgraph
  
+    first-remote-name = "!git config --list --local | awk 'BEGIN{FS=\".\"}/^remote/{print $2; exit}' || echo origin"
+
 [core]
     excludesfile = ~/.gitignore-global
 
