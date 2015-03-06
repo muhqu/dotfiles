@@ -46,6 +46,7 @@
     bg = !git branchgraph
  
     first-remote-name = "!git config --list --local | awk 'BEGIN{FS=\".\"}/^remote/{print $2; exit}' || echo origin"
+    fetch-pr = "!f(){ [ -z "$1" ] && echo >&2 "Usage: git fetch-pr NUMBER [REMOTE]" || git fetch ${2:-$(git first-remote-name)} pull/${1}/head:pr-${1}; };f"
 
 [core]
     excludesfile = ~/.gitignore-global
