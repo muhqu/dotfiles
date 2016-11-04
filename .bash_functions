@@ -4,6 +4,14 @@
 # generic functions specific
 # -----------------------------------------------------------------------------
 
+until-it-works() {
+  while true; do
+    echo $'\033'"[33m>> $@"$'\033'"[0m";
+    "$@" && break
+    sleep 20
+  done
+}
+
 callonchange() {
     WATCH_PATH="$1"
     shift 1
