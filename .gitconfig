@@ -16,6 +16,13 @@
     ru = remote update
     ruffwd = !git remote update && git ffwd
 
+    change = codereview change
+    gofmt = codereview gofmt
+    mail = codereview mail
+    pending = codereview pending
+    submit = codereview submit
+    sync = codereview sync
+    
     ready = rebase -i --autosquash @{u}
     udiff = diff @{u}
     wdiff = diff --word-diff
