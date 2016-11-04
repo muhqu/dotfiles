@@ -347,3 +347,30 @@ gifify() {
 }
 
 fi # if Darwin
+
+
+
+#
+# AWS specific
+# -----------------------------------------------------------------------------
+
+ec2-hosts() {
+    aws ec2 describe-instances "$@" \
+      --filters Name=instance-state-name,Values=pending,running,shutting-down,stopping,stopped \
+      --output json \
+     | jq -r '.Reservations[].Instances[] | [
+        .PublicIpAddress,
+        .PublicDnsName,
+        "#",
+        .InstanceId,
+        .Placement.AvailabilityZone,
+        .State.Name,
+        ([(.Tags//[])[]|select(.Key == "Name")|.Value][0]),
+        .KeyName
+      ] | join("\t")' \
+     | column -ts$'\t' \
+     | cut -c -$COLUMNS
+}
+
+
+
