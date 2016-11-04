@@ -28,10 +28,46 @@ if [[ "$TERM" = xterm-*color ]] ||  [[ "$TERM" = screen ]]; then
         ;;
     esac
     
-    PS1="${TITLEBAR}\[\033[1;30m\]╭╶ \[\033[01;33m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\$(parse_branch)\[\033[01;31m\]\$(parse_aws_profile)\[\033[01;36m\]\w\[\033[0m\]\n\[\033[1;30m\]╰╶➤ \[\033[0m\] "
+    PS1="${TITLEBAR}\[\033[34m\]╭─ \[\033[01;33m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\$(parse_branch)\[\033[01;31m\]\$(parse_aws_profile)\[\033[0m\]\[\033[1;36m\]\w\[\033[0m\]\n\[\033[34m\]╰─➤\[\033[0m\] "
 
     parse_aws_profile() {
-      [ -n "$AWS_DEFAULT_PROFILE" ] && echo "AWS($AWS_DEFAULT_PROFILE)"
+      local _AWS_PROFILE_OLD="$_AWS_PROFILE"
+      local _STACK_FILE="$HOME/.aws/current_stack.$$"
+      if [[ -n "$AWS_DEFAULT_PROFILE" ]]; then
+        _AWS_PROFILE="$AWS_DEFAULT_PROFILE"
+        echo "$AWS_DEFAULT_PROFILE" > "$_STACK_FILE"
+      elif [[ -n "$AWS_ACCESS_KEY_ID" && -n "$AWS_SECRET_ACCESS_KEY" ]]; then
+        find $HOME/.aws/ -name 'current_stack*' -mtime +15m -delete # tidy up, delete expired files
+        _SHA1=$(echo "$AWS_ACCESS_KEY_ID|$AWS_SECRET_ACCESS_KEY|$AWS_SECURITY_TOKEN" | openssl sha1)
+        if [[ "$(cat "$_STACK_FILE.sha1" 2>/dev/null)" != "$_SHA1" ]]; then
+          echo "$_SHA1" > "$_STACK_FILE.sha1"
+          ( (aws sts get-caller-identity --output text --query 'Arn' | grep -Eo '/.*$') \
+            || echo "token expired")> "$_STACK_FILE"
+          # ( ( aws ec2 describe-tags --filters Name=resource-type,Values=vpc 2>/dev/null \
+          #                         | jq -r '.Tags[] | select(.Key == "aws:cloudformation:stack-name") | .Value') \
+          #            || echo "token expired") \
+          #   > "$_STACK_FILE"
+        fi
+        _AWS_PROFILE="$(cat "$_STACK_FILE")"
+      else
+        _AWS_PROFILE=""
+      fi
+      if [ -n "$_AWS_PROFILE" ]; then
+        if [[ "$_AWS_PROFILE" == *[Dd][Ee][Vv]* ]]; then
+          _COLOR="0;32" # GREEN for Dev
+          _ITERM_BG=$'\E]Ph093A1D\E\\'
+        elif [[ "$_AWS_PROFILE" == *[Ss][Tt][Aa][Gg][Ee]* ]]; then
+          _COLOR="38;5;75" # BLUE for Stage
+          _ITERM_BG=$'\E]Ph0E0047\E\\'
+        else
+          _COLOR="0;31" # RED for anything else
+          _ITERM_BG=$'\E]Ph660000\E\\'
+        fi
+        printf '\033[%smAWS(%s)\033[0m%s' "$_COLOR" "$_AWS_PROFILE" "$_ITERM_BG"
+      elif [[ -f "$_STACK_FILE" ]]; then
+        rm "$_STACK_FILE"
+        echo -n $'\E]Ph000000\E\\'
+      fi
     }
 
     parse_branch() {
