@@ -12,15 +12,15 @@ if [ -f ~/.bash_complete_mvn ]; then
 fi
 
 if [ -f /usr/local/go/misc/bash/go ]; then
-	. /usr/local/go/misc/bash/go
+    . /usr/local/go/misc/bash/go
 fi
 
 if [ -f ~/.iterm2_shell_integration.bash ]; then
-	env | grep ITERM >/dev/null && . ~/.iterm2_shell_integration.bash
+    env | grep ITERM >/dev/null && . ~/.iterm2_shell_integration.bash
 fi
 
 if [ -n "$(which aws_completer)" ]; then
-	complete -C aws_completer aws
+    complete -C aws_completer aws
 
 	aws-profile() {
 		export AWS_DEFAULT_PROFILE="$1"
@@ -29,6 +29,6 @@ if [ -n "$(which aws_completer)" ]; then
 fi
 
 if which rbenv > /dev/null; then
-	export RBENV_ROOT=/usr/local/var/rbenv
-	eval "$(rbenv init -)";
+    export RBENV_ROOT=/usr/local/var/rbenv
+    eval "$(rbenv init -)";
 fi
