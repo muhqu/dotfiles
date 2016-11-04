@@ -232,6 +232,25 @@ iterm-succfail() {
     return $CODE
 }
 
+guess-build-cmd() {
+    if [ -e ./Makefile ]; then
+        echo make "$@";
+    elif [ -e ./build.sh ]; then
+        echo ./build.sh "$@";
+    elif [ -e ./pom.xml ]; then
+        echo mvn "$@";
+    elif [ -e ./Rakefile ]; then
+        echo rake "$@";
+    else
+        echo make "$@";
+    fi
+}
+
+makemake() {
+    CMD=$(guess-build-cmd "$@")
+    callonchange ./ "clear; date; echo; $CMD; iterm-succfail; sleep 1s"
+}
+
 manpdf() {
     case "$1" in -h|-help|--help|'') echo "Usage: manpdf [section] name"; return 0;; esac
     man -t "$@" | open -f -a Preview
