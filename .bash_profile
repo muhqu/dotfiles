@@ -22,10 +22,48 @@ fi
 if [ -n "$(which aws_completer)" ]; then
     complete -C aws_completer aws
 
-	aws-profile() {
-		export AWS_DEFAULT_PROFILE="$1"
-	}
+    aws-profile() {
+        if [[ -n "$1" ]]; then
+            export AWS_DEFAULT_PROFILE="$1"
+            export AWS_PROFILE="$1"
+            export AWS_REGION="$(aws configure get region 2>/dev/null || echo us-east-1)"
+        else
+            unset AWS_DEFAULT_PROFILE
+            unset AWS_PROFILE
+            unset AWS_REGION
+            unset AWS_ACCESS_KEY_ID
+            unset AWS_SECRET_ACCESS_KEY
+            unset AWS_SESSION_TOKEN
+        fi
+    }
+    __aws-profile() {
+        local cur
+        COMPREPLY=()   # Array variable storing the possible completions.
+        cur=${COMP_WORDS[COMP_CWORD]}
+        if [[ $COMP_CWORD -eq 1 ]]; then
+            COMPREPLY=( $( compgen -W "$(awk -F '[\\]\\[ ]+' '/^\[/{print $2}' ~/.aws/credentials)" -- $cur ) )
+        fi
+        return 0
+    }
+    complete -F __aws-profile aws-profile
 
+    aws-region() {
+        if [[ -n "$1" ]]; then
+            export AWS_DEFAULT_REGION="$1"
+        else
+            echo "$AWS_DEFAULT_REGION"
+        fi
+    }
+    __aws-region() {
+        local cur
+        COMPREPLY=()   # Array variable storing the possible completions.
+        cur=${COMP_WORDS[COMP_CWORD]}
+        if [[ $COMP_CWORD -eq 1 ]]; then
+            COMPREPLY=( $( compgen -W "us-east-1 us-west-2 eu-west-1 ap-northeast-1" -- $cur ) )
+        fi
+        return 0
+    }
+    complete -F __aws-region aws-region
 fi
 
 if which rbenv > /dev/null; then
