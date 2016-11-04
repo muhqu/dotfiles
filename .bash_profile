@@ -73,3 +73,7 @@ fi
 
 [[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm" # Load RVM into a shell session *as a function*
 
+if which direnv > /dev/null; then
+    eval "$(direnv hook bash)";
+fi
+
