@@ -392,4 +392,43 @@ ec2-hosts() {
 }
 
 
+#
+# Java specific
+# -----------------------------------------------------------------------------
+
+mvn() {
+    local PURPLE=$(echo -en "\033[35m")
+    local GREEN=$(echo -en "\033[32m")
+    local RED=$(echo -en "\033[31m")
+    local YELLOW=$(echo -e "\033[33m")
+    local BLUE=$(echo -e "\033[1;34m")
+    local NORMAL=$(echo -e "\033[0m")
+
+    $(which mvn) "$@" | sed \
+        -e "s/^\(.ERROR. .*\)$/$RED\1$NORMAL/                  ; #contain ERROR start 2nd char
+        s/^\(Tests run: .*<<< FAILURE\!\)/$RED\1$NORMAL/       ; # contain Tests run: <something> <<< FAILURE
+        s/^\( \w*\\([\w\.]*\\).*: .*\)/$RED\1$NORMAL/          ; # a name of method(name of class with package): error message
+        s/^\(Failed tests:.*\)/$RED\1$NORMAL/                  ; # contain Failed tests: 
+        s/^\(|.*\)/$RED\1$NORMAL/                              ; # line start with pipe
+        s/^\(### Content of table.*\)/$RED\1$NORMAL/           ; # line start ### Content of table (dbunit)
+        s/^\(Caused by*.*\)/$RED\1$NORMAL/                     ; # line start Caused by
+        s/^\(\tat .*\)/$RED\1$NORMAL/                          ; # line start at ... (stack trace)
+        s/^\(\t*.*more.*\)/$RED\1$NORMAL/                      ; # line start with tab and contain something with more (stack trace)
+        s/^\(##*.*\)/$RED\1$NORMAL/                            ; # line start more than 1 #
+        s/^\(Running.*\)/$BLUE\1$NORMAL/                       ; # Line start with Running (surefire)
+        s/^\(Tests run: .*[^FAILURE].*\)/${YELLOW}\1${NORMAL}/ ;  # test not failed
+        s/^\(.INFO. BUILD FAILURE.*\)$/$RED\1$NORMAL/          ; # BUILD FAILURE
+        s/^\(.INFO. ----.*\)$/$PURPLE\1$NORMAL/                ; # INFO of module block
+        s/^\(.INFO. Building.*SNAPSHOT\)$/$PURPLE\1$NORMAL/    ; # INFO of module block (with version)
+        s/^\(.INFO. --- .* ---.*\)$/$PURPLE\1$NORMAL/          ; # info of plugin
+        s/^\(.INFO. .*\)$/$GREEN\1$NORMAL/                     ; # other info
+        s/^\(.WARNING. .*\)$/$BLUE\1$NORMAL/                   ; # warning
+        s/^\(\w*\.\w*\) \(r [0-9]* w 0 e 0 .* seconds.*\)$/$BLUE\1$NORMAL $YELLOW\2$NORMAL/; 
+        s/^\(\w*\.\w*\) \(r [0-9]* w [1-9] e 0 .* seconds.*\)$/$RED\1 \2$NORMAL/; 
+        s/^\(\w*\.\w*\) \(r [0-9]* w [1-9] e [1-9] .* seconds.*\)$/$RED\1 \2$NORMAL/; 
+        s/^\(\w*\.\w*\) \(r [0-9]* w 0 e [1-9] .* seconds.*\)$/$RED\1 \2$NORMAL/; 
+                            # Fitnesse execute test;
+        s/^\([^\[].*\)/${YELLOW}\1${NORMAL}/                   ; # line doesn't start with [ 
+        " 
+}
 
