@@ -13,6 +13,9 @@
     co = checkout
     br = branch
     ri = rebase -i --autosquash
+    ru = remote update
+    ruffwd = !git remote update && git ffwd
+
     ready = rebase -i --autosquash @{u}
     udiff = diff @{u}
     wdiff = diff --word-diff
@@ -32,8 +35,6 @@
     squash = "!sh -c 'git commit -m \"squash! $(git log -1 --format='\\''%s'\\'' $@)\"' -"
     
     stash-list = "!git stash list | while read line; do   ref=${line%%:*};   prefix=$(test $(git diff $ref | wc -l) == \"0\" && echo \"✔  \" || echo \"   \");   echo \"$prefix$line\"; done"
-
-    ffwd = ffwd-update
 
     subl = "!f(){ FILE=\"$GIT_PREFIX$2\"; if [ -z \"$2\" -a -n \"$DTERM_SELECTED_FILES\" ]; then FILE=\".${DTERM_SELECTED_FILES/$PWD/}\"; fi; git cat-file -p \"$1:$FILE\" | subl -n; };f"
 
