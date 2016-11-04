@@ -5,7 +5,8 @@ if [[ "$PATH" != */usr/local/sbin* ]]; then
 fi
 
 export MANPATH=/usr/local/share/man:$MANPATH
-export JAVA_HOME="$(/usr/libexec/java_home -v 1.7)"
+export JAVA_HOME="$(/usr/libexec/java_home -v 1.8)"
+export GROOVY_HOME=/usr/local/opt/groovy/libexec
 export LC_ALL=en_US.UTF-8
 export LANG=en_US.UTF-8
 
