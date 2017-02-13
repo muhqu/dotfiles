@@ -5,6 +5,10 @@ if [[ "$TERM" = xterm-*color || "$TERM" = screen || "$TERM_PROGRAM" = DTerm ]]; 
     alias grep='grep --color=auto'
     export GREP_COLOR=32 # nice green!
 
+    pod() {
+      "$(which pod)" --ansi "$@"
+    }
+
     # Less Colors for Man Pages
     man () {
       (
