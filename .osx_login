@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# set a blazing fast key repeat rate
-defaults write NSGlobalDomain KeyRepeat -int 0.02 
+# set a blazing fast key repeat rate 
+defaults write NSGlobalDomain KeyRepeat -int 2 # used to be 0.02 pre macOS Sierra.
 # set a shorter key repeat delay
 defaults write NSGlobalDomain InitialKeyRepeat -int 12
 
@@ -45,8 +45,8 @@ defaults write NSGlobalDomain NSDisableAutomaticTermination -bool true
 # I don't like too much tranparency
 defaults write com.apple.universalaccess reduceTransparency 1
 
-# Dark Dock and Light Menubar trick
-defaults write NSGlobalDomain AppleInterfaceStyle Dark
-killall Dock; sleep 1s
-defaults remove NSGlobalDomain AppleInterfaceStyle
+## Dark Dock and Light Menubar trick
+#defaults write NSGlobalDomain AppleInterfaceStyle Dark
+#killall Dock; sleep 1s
+#defaults remove NSGlobalDomain AppleInterfaceStyle
 
