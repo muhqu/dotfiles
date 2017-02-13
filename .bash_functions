@@ -4,6 +4,14 @@
 # generic functions specific
 # -----------------------------------------------------------------------------
 
+json2yml() {
+  python -c 'import sys,json,yaml;yaml.safe_dump(json.load(sys.stdin),sys.stdout,allow_unicode=True)'
+}
+
+yml2json() {
+  python -c 'import sys,json,yaml;json.dump(yaml.load(sys.stdin),sys.stdout,ensure_ascii=False,indent=2)'
+}
+
 until-it-works() {
   while true; do
     echo $'\033'"[33m>> $@"$'\033'"[0m";
