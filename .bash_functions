@@ -440,3 +440,22 @@ mvn() {
         " 
 }
 
+
+
+github-url() {
+    (git config --get "remote.$USER.url" || git config --get "remote.origin.url") \
+     | jq -R '
+        capture("git@(?<host>[^:/]+):(?<org>[^/]+)/(?<repo>[^/]+?).git")
+      | "https://\(.host)/\(.org)/\(.repo)"
+     ' -r
+}
+
+github-web() {
+    GITHUB_URL="$( github-url )"
+    if [[ -n "$GITHUB_URL" ]]; then
+        open "$GITHUB_URL"
+    else
+        echo >&2 "Error: Could not generate GitHub URL"
+    fi
+}
+
