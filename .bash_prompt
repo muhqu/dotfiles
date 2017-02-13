@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [[ "$TERM" = xterm-*color ]] ||  [[ "$TERM" = screen ]]; then
+if [[ "$TERM" = xterm-*color || "$TERM" = screen || "$TERM_PROGRAM" = DTerm ]]; then
     alias ls='ls -G'
     alias grep='grep --color=auto'
     export GREP_COLOR=32 # nice green!
@@ -8,6 +8,7 @@ if [[ "$TERM" = xterm-*color ]] ||  [[ "$TERM" = screen ]]; then
     # Less Colors for Man Pages
     man () {
       (
+        export LESS=-Xr
         export LESS_TERMCAP_mb=$'\e[01;31m'       # begin blinking
         export LESS_TERMCAP_md=$'\e[01;38;5;74m'  # begin bold
         export LESS_TERMCAP_me=$'\e[0m'           # end mode
@@ -18,7 +19,9 @@ if [[ "$TERM" = xterm-*color ]] ||  [[ "$TERM" = screen ]]; then
         $(which man) "$@"
       )
     }
+fi
 
+if [[ "$TERM" = xterm-*color || "$TERM" = screen ]]; then
     case $TERM in
       xterm*)
         TITLEBAR='\[\033]0;\h:\w\007\]'
