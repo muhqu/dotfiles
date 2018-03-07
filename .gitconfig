@@ -58,6 +58,7 @@
 
 [core]
     excludesfile = ~/.gitignore-global
+    hooksPath = ~/.githooks
 
 [push]
     default = simple

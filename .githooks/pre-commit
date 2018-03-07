@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# Redirect output to stderr.
+exec 1>&2
+
+source ~/.githooks/pre-commit.allownonascii
+
+source ~/.githooks/pre-commit.protectedbranches
+
+
+
+
+
+
+
+

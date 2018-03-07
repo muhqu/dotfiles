@@ -1,0 +1,22 @@
+#!/bin/bash
+
+BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+
+# If you want to allow non-ASCII filenames set this variable to true.
+SETTINGS_KEY="hooks.protect-branch.$BRANCH"
+IS_PROTECTED=$(git config --bool "$SETTINGS_KEY")
+
+if [ "$IS_PROTECTED" == "true" ]; then
+    echo
+    echo "You are on branch $BRANCH. Are you sure you want to commit to this branch?"
+    echo "If so, commit with -n to bypass this pre-commit hook."
+    echo
+    exit 1
+elif [[ -z "$IS_PROTECTED" ]] && [[ "$BRANCH" == "master" || "$BRANCH" == "develop" ]]; then
+    echo
+    echo "You are on branch $BRANCH, which is implicitly protected."
+    echo "If you like to allow direct commits run:"
+    echo "  git config $SETTINGS_KEY false"
+    echo
+    exit 1
+fi
