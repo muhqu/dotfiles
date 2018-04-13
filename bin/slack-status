@@ -1,0 +1,143 @@
+#!/bin/bash
+#
+# The MIT License (MIT)
+#
+# Copyright (c) 2017 Mathias Leppich <mleppich@muhqu.de>
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
+help() {
+    local SELF=$(basename "$0")
+    cat <<HELP
+Usage: $SELF [OPTIONS] STATUS TEXT
+
+Options:
+    -h, --help            this help
+    -t, --token TOKEN     Slack Token to be used for authentication. The token
+                          can also be passed via SLACK_TOKEN env var or provided
+                          via OS X keychain entry "Slack Token".
+    -e, --emoji TXT       Status emoji to be used by slack.
+
+Examples:
+
+    $ $SELF -e :house_with_garden: Working from home…
+    {"ok":true,"profile":{"status_text":"Working from home…","status_emoji":":house_with_garden:"}}
+
+    $ $SELF Bla bla blub
+    {"ok":true,"profile":{"status_text":"Bla bla blub","status_emoji":":speech_balloon:"}}
+
+Author:
+    (c) 2017 Mathias Leppich <mleppich@muhqu.de>
+
+HELP
+}
+
+main() {
+  local action=""
+  local status_emoji=""
+  local status_text=""
+  local slacktoken="${SLACK_TOKEN}"
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+
+      -h|-help|--help)
+        action="help";
+        shift;
+        ;;
+
+      -e|-emoji|--emoji)
+        if [[ -z "$2" ]]; then
+          fatal "missing parameter for option: $1"
+        fi
+        status_emoji="$2"
+        shift; shift;
+        ;;
+
+      -t|-token|--token)
+        if [[ -z "$2" ]]; then
+          fatal "missing parameter for option: $1"
+        fi
+        slacktoken="$2"
+        shift; shift;
+        ;;
+
+      -*)
+        fatal "unknown option: $1"
+        ;;
+
+      *)
+        status_text="$status_text $1"
+        shift;
+        ;;
+
+    esac 
+  done
+  status_text="${status_text:1}"
+
+  if [[ -n "$action" ]]; then
+      $action
+      return
+  fi
+
+  if [[ -z "$slacktoken" ]]; then
+      slacktoken=$(security find-generic-password -s 'Slack Token' -w)
+      if [[ -z "$slacktoken" ]]; then
+          error-missing-slack-token
+          exit 1
+      fi
+  fi
+
+  curl -X POST "https://slack.com/api/users.profile.set" \
+      -H "Authorization: Bearer $slacktoken" \
+      -H 'Content-type: application/json; charset=utf-8' \
+      --data "$(jq -n -c \
+          --arg apiurl "$apiurl" \
+          --arg status_emoji "$status_emoji" \
+          --arg status_text "${status_text}" \
+          '{profile:{
+              status_text: "\($status_text//$status_emoji)",
+              status_emoji: "\($status_emoji)",
+          }}'
+      )" \
+      --silent --show-error \
+  | jq -c 'if .ok then {ok,profile:(.profile|{status_text,status_emoji})} else . end'
+}
+
+error-missing-slack-token() {
+  cat >&2 <<ERROR
+Error: No Slack-Token provided.
+
+   Get a Legacy token via https://api.slack.com/custom-integrations/legacy-tokens
+   and either pass it via --token parameter, SLACK_TOKEN env var or just add it to
+   OS X Keychain with the following command:
+      security add-generic-password -a token -s 'Slack Token' -w 'TOKEN…'
+
+ERROR
+}
+
+error() {
+    echo >&2 "Error:" "$@"
+}
+
+fatal() {
+    echo >&2 "Error:" "$@"
+    exit 1
+}
+
+main "$@"
