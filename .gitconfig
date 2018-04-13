@@ -59,6 +59,9 @@
  
     first-remote-name = "!git config --list --local | awk 'BEGIN{FS=\".\"}/^remote/{print $2; exit}' || echo origin"
     fetch-pr = "!f(){ [ -z "$1" ] && echo >&2 "Usage: git fetch-pr NUMBER [REMOTE]" || git fetch ${2:-$(git first-remote-name)} pull/${1}/head:pr-${1}; };f"
+    new-pr = "!f(){ local U="$(git github-url)"; local B="$(git rev-parse --abbrev-ref HEAD)"; echo "U:$U     B:$B"; if [ -z "$U" ]; then echo >&2 "Error: Missing Github URL."; exit 1; fi; git push --set-upstream ${1:-$(git first-remote-name)} HEAD && open "${U}/compare/${B}?expand=1"; };f"
+    github-url = "!f(){ (git config --get \"remote.$USER.url\" || git config --get \"remote.$(git first-remote-name).url\") | jq -R 'capture(\"git@(?<host>[^:/]+):(?<org>[^/]+)/(?<repo>[^/]+?).git\") | \"https://\\(.host)/\\(.org)/\\(.repo)\" ' -r; };f"
+    github = "!f(){ open "$(git github-url)"; };f"
 
 [core]
     excludesfile = ~/.gitignore-global
