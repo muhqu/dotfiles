@@ -16,6 +16,7 @@ checkin :
 install :
 	mkdir -p $(HOME)/bin $(HOME)/Library/LaunchAgents
 	test -L $(HOME)/.githooks || ln -s $(CURDIR)/.githooks $(HOME)/.githooks
+	test -L $(HOME)/.hammerspoon || ln -s $(CURDIR)/.hammerspoon $(HOME)/.hammerspoon
 	git ls-files | awk '/^(\.|bin\/|Library\/LaunchAgents\/)/' | grep -vE '.githooks|.hammerspoon' | xargs -t -n1 -I% sh -c "rm $(HOME)/% 2>/dev/null; ln -s $(CURDIR)/% $(HOME)/%"
 	git ls-files | awk '/^(Library\/LaunchAgents\/)/' | xargs -t -n1 -I% sh -c "launchctl unload ~/%; launchctl load ~/%"
 	test -d $(CHROME_USER_STYLES_DIR) || mkdir -p $(CHROME_USER_STYLES_DIR)
