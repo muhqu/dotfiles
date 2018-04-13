@@ -14,7 +14,9 @@
     br = branch
     ri = rebase -i --autosquash
     ru = remote update
+    rup = remote update --prune
     ruffwd = !git remote update && git ffwd
+    rupffwd = !git remote update --prune && git ffwd
 
     change = codereview change
     gofmt = codereview gofmt
