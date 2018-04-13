@@ -47,6 +47,8 @@
 
     subl = "!f(){ FILE=\"$GIT_PREFIX$2\"; if [ -z \"$2\" -a -n \"$DTERM_SELECTED_FILES\" ]; then FILE=\".${DTERM_SELECTED_FILES/$PWD/}\"; fi; git cat-file -p \"$1:$FILE\" | subl -n; };f"
 
+    wip-push = "!f(){ if git log --format=%B -n 1 | grep WIP >/dev/null 2>&1; then git commit -a --amend -C HEAD && git push -f; else echo >&2 \"Error: HEAD is not a WIP commit\"; fi; };f"
+
     # via http://stackoverflow.com/a/4991675/450383
     oldest-ancestor = !bash -c 'diff --old-line-format='' --new-line-format='' <(git rev-list --first-parent "${1:-master}") <(git rev-list --first-parent "${2:-HEAD}") | head -1' -
     branchdiff = "!f(){ git diff $(git oldest-ancestor ${1:-master} ${2:-HEAD})..${2:-HEAD}; };f"
