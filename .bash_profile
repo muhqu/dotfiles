@@ -19,6 +19,12 @@ if [ -f ~/.iterm2_shell_integration.bash ]; then
     env | grep ITERM >/dev/null && . ~/.iterm2_shell_integration.bash
 fi
 
+if [ "$TERM_PROGRAM" == "DTerm" ]; then
+    git() { # force colors for dterm 
+        $(which git) -c color.status=always -c color.ui=always -c color.branch=always -c color.diff=always "$@"
+    }
+fi
+
 if [ -n "$(which aws_completer)" ]; then
     complete -C aws_completer aws
 
