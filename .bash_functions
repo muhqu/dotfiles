@@ -443,7 +443,7 @@ mvn() {
 
 
 github-url() {
-    (git config --get "remote.$USER.url" || git config --get "remote.origin.url") \
+    (git config --get "remote.$USER.url" || git config --get "remote.$(git first-remote-name).url") \
      | jq -R '
         capture("git@(?<host>[^:/]+):(?<org>[^/]+)/(?<repo>[^/]+?).git")
       | "https://\(.host)/\(.org)/\(.repo)"
