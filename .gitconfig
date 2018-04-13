@@ -134,3 +134,15 @@
     insteadOf = https://gist.github.com/
     insteadOf = git://gist.github.com/
 
+[gitx.markup "AWS"]
+    pattern = "(AWS-\\d{4}-\\d+)"
+    href = "https://aws.amazon.com/security/security-bulletins/$1/"
+
+# [gitx.markup "CVE"]
+#     regex = "(\\s)(CVE-\\d{4}-\\d+)\\b"
+#     substitution = "$1<a href=\"https://cve.mitre.org/cgi-bin/cvename.cgi?name=$2\">$2</a>"
+
+# [gitx.markup "AWS"]
+#     regex = "(\\s)(AWS-\\d{4}-\\d+)\\b"
+#     substitution = "$1<a href=\"https://aws.amazon.com/security/security-bulletins/$2/\">$2</a>"
+
