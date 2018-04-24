@@ -250,6 +250,35 @@ function toggleApp(appName)
 end
 
 
+-- 
+-- Auto Close the annoying "Disk Not Ejected Properly" Notifications
+--
+function clearEjectNotifications()
+	hs.osascript.applescript([[
+		tell application "System Events"
+			tell process "NotificationCenter"
+				set windowCount to count windows
+				repeat with i from windowCount to 1 by -1
+					set notifTitle to value of static text 1 of window i
+					-- set notifDescription to value of static text 2 of scroll area 1 of window i
+					-- log notifDescription
+					-- if notifTitle is "Disk Not Ejected Properly" and notifDescription contains "LaCie" then
+					if notifTitle is "Disk Not Ejected Properly" then
+						click button "Close" of window i
+					end if
+				end repeat
+			end tell
+		end tell
+	]])
+end
+hs.distributednotifications.new(function(name, object, userInfo)
+	print(string.format("NOTIF: %s", hs.inspect({name, object, userInfo}, {newline=" ",indent=""})))
+	if (name == "com.apple.sharedfilelist.change" and object == "com.apple.LSSharedFileList.FavoriteVolumes") then
+		clearEjectNotifications()
+	end
+end):start()
+
+
 function notify(message)
 	hs.notify.new({title="Hammerspoon", informativeText=message}):send()
 end
