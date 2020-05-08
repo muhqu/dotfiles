@@ -34,12 +34,11 @@ main() {
   REMOTES=$(echo "$REMOTES" | xargs -n1 echo)
   CLB=$(git rev-parse --abbrev-ref HEAD);
   echo "$REMOTES" | while read REMOTE; do
+    git remote update $REMOTE
     git remote show $REMOTE -n \
     | awk '/merges with remote/{print $5" "$1}' \
-    | while read line; do
-      RB=$(echo "$line"|cut -f1 -d" ");
+    | while read RB LB; do
       ARB="refs/remotes/$REMOTE/$RB";
-      LB=$(echo "$line"|cut -f2 -d" ");
       ALB="refs/heads/$LB";
       NBEHIND=$(( $(git rev-list --count $ALB..$ARB 2>/dev/null) +0));
       NAHEAD=$(( $(git rev-list --count $ARB..$ALB 2>/dev/null) +0));
@@ -50,8 +49,8 @@ main() {
           echo " branch $LB was $NBEHIND commit(s) behind of $REMOTE/$RB. fast-forward merge";
           git merge -q $ARB;
         else
-          echo " branch $LB was $NBEHIND commit(s) behind of $REMOTE/$RB. reseting local branch to remote";
-          git branch -l -f $LB -t $ARB >/dev/null;
+          echo " branch $LB was $NBEHIND commit(s) behind of $REMOTE/$RB. resetting local branch to remote";
+          git branch -f $LB -t $ARB >/dev/null;
         fi
       fi
     done
